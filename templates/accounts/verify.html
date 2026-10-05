@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block title %}کد تأیید — {{ site.site_name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<section class="auth">
+  <div class="auth__wrap">
+    <div class="c auth__box">
+      <div class="auth__ic">{% ic "mail" 26 %}</div>
+      <h1>کد تأیید را وارد کنید</h1>
+      <p class="muted mb-3">کد ۶ رقمی به شماره‌ی <b class="ltr">{{ mobile|fa_num }}</b> پیامک شد.
+        <a href="{% url 'accounts:login' %}" class="text-nowrap" style="color:var(--p)">{% ic "edit" 14 %} تغییر شماره</a></p>
+      <form method="post" id="otpForm" novalidate>{% csrf_token %}
+        <label class="visually-hidden" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+        {{ form.code }}
+        {% for e in form.code.errors %}<div class="err mt-2 text-center">{{ e }}</div>{% endfor %}
+        {% for e in form.non_field_errors %}<div class="err mt-2 text-center">{{ e }}</div>{% endfor %}
+        <button class="b b--p b--lg w-100 mt-3">تأیید و ورود</button>
+      </form>
+      <form method="post" action="{% url 'accounts:resend' %}" class="resend">{% csrf_token %}
+        <span class="muted small" id="rsWait">ارسال دوباره تا <b id="rsSec" class="mono">۶۰</b> ثانیه‌ی دیگر</span>
+        <button class="b b--sm b--g" id="rsBtn" hidden>{% ic "refresh" 15 %} کد نرسید؟ ارسال دوباره</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var inp = document.getElementById('{{ form.code.id_for_label }}'), form = document.getElementById('otpForm');
+  if (inp) {
+    inp.setAttribute('maxlength', '6'); inp.setAttribute('placeholder', '••••••');
+    inp.addEventListener('input', function () {
+      var v = inp.value.replace(/[۰-۹]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/\D/g, '').slice(0, 6);
+      if (inp.value !== v) inp.value = v;
+      if (v.length === 6 && !form.dataset.sent) { form.dataset.sent = 1; form.requestSubmit ? form.requestSubmit() : form.submit(); }
+    });
+  }
+  var left = 60, sec = document.getElementById('rsSec'), wait = document.getElementById('rsWait'), btn = document.getElementById('rsBtn');
+  var t = setInterval(function () {
+    left -= 1; sec.textContent = window.faNum ? faNum(left) : left;
+    if (left <= 0) { clearInterval(t); wait.hidden = true; btn.hidden = false; }
+  }, 1000);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}اشتراک‌گذاری «{{ s.title }}» — {{ site.short_name }}{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" %}
+<main class="main wrap">
+  <div class="ph"><div><h1>اشتراک‌گذاری فرم</h1><div class="small muted">لینک، کد QR، جاسازی در سایت و ارسال در پیام‌رسان‌ها.</div></div></div>
+
+  {% if s.status == "draft" or not s.published %}
+  <div class="note note--warn mb-3">{% ic "alert" 20 %}<div><b>این فرم هنوز منتشر نشده است.</b><div class="small">تا وقتی فرم را منتشر نکنید، کسی که لینک را باز کند پاسخی نمی‌تواند ثبت کند.</div></div>
+    {% if m.can_edit %}<a class="b b--p b--sm ms-auto" href="{% url 'surveys:edit' s.pk %}">{% ic "send" 15 %} رفتن به طراحی و انتشار</a>{% endif %}</div>
+  {% elif s.status == "closed" %}
+  <div class="note note--bad mb-3">{% ic "lock" 20 %}<div><b>پاسخ‌گیری این فرم بسته است.</b><div class="small">بازدیدکنندگان پیام «{{ s.closed_message|default:'این فرم دیگر پاسخ نمی‌پذیرد.' }}» را می‌بینند.</div></div>
+    {% if m.can_edit %}<form class="ms-auto" method="post" action="{% url 'surveys:action' s.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="b b--sm" name="act" value="open" type="submit">{% ic "power" 15 %} بازکردن پاسخ‌گیری</button></form>{% endif %}</div>
+  {% elif s.has_unpublished %}
+  <div class="note mb-3">{% ic "alert" 18 %}<div class="small">تغییرات منتشرنشده دارید؛ پاسخ‌دهندگان هنوز نسخه‌ی قبلی را می‌بینند.</div></div>
+  {% endif %}
+
+  <div class="shg">
+    <div class="d-grid gap-3">
+      <section class="c">
+        <div class="c__h">{% ic "link" 18 %}<h2>لینک مستقیم فرم</h2></div>
+        <div class="c__b">
+          <div class="copy">
+            <input class="form-control" id="shareUrl" value="{{ url }}" readonly aria-label="لینک فرم" onclick="this.select()">
+            <button class="b b--p" type="button" data-copy-from="#shareUrl" data-copy="">{% ic "copy" 16 %} کپی</button>
+            <a class="b" href="{{ url }}" target="_blank" rel="noopener" title="بازکردن">{% ic "external" 16 %}<span class="d-none d-md-inline">باز کردن</span></a>
+          </div>
+          <div class="help">کد کوتاه فرم: <b class="mono">{{ s.code }}</b></div>
+
+          <h3 class="fs-6 fw-bold mt-4 mb-2">ارسال سریع</h3>
+          <div class="shares">
+            <a class="share share--wa" href="https://wa.me/?text={{ s.title|urlencode:'' }}%0A{{ url|urlencode:'' }}" target="_blank" rel="noopener">{% ic "phone" 18 %} واتس‌اپ</a>
+            <a class="share share--tg" href="https://t.me/share/url?url={{ url|urlencode:'' }}&amp;text={{ s.title|urlencode:'' }}" target="_blank" rel="noopener">{% ic "send" 18 %} تلگرام</a>
+            <a class="share share--mail" href="mailto:?subject={{ s.title|urlencode:'' }}&amp;body={{ 'لطفاً این فرم را پر کنید:'|urlencode:'' }}%0A{{ url|urlencode:'' }}">{% ic "mail" 18 %} ایمیل</a>
+            <a class="share share--sms" href="sms:?&amp;body={{ s.title|urlencode:'' }}%0A{{ url|urlencode:'' }}">{% ic "inbox" 18 %} پیامک</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="c">
+        <div class="c__h">{% ic "code" 18 %}<h2>جاسازی در وب‌سایت</h2></div>
+        <div class="c__b">
+          <ul class="etabs mb-3" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#emb-js" type="button" role="tab">اسکریپت (پیشنهادی)</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#emb-if" type="button" role="tab">iframe</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="emb-js" role="tabpanel">
+              <p class="small muted mb-2">ارتفاع فرم خودکار با محتوا تنظیم می‌شود. این کد را هر جای صفحه که می‌خواهید فرم نمایش داده شود بگذارید:</p>
+<textarea class="form-control code" id="embJs" rows="3" readonly>&lt;div data-icsd-form="{{ s.code }}" data-height="600"&gt;&lt;/div&gt;
+&lt;script src="{{ embed }}" async&gt;&lt;/script&gt;</textarea>
+              <button class="b b--sm mt-2" type="button" data-copy-from="#embJs" data-copy="">{% ic "copy" 15 %} کپی کد</button>
+            </div>
+            <div class="tab-pane fade" id="emb-if" role="tabpanel">
+              <p class="small muted mb-2">ساده‌ترین روش؛ ارتفاع ثابت است و می‌توانید آن را تغییر دهید.</p>
+<textarea class="form-control code" id="embIf" rows="3" readonly>&lt;iframe src="{{ url }}?embed=1" width="100%" height="600" style="border:0;border-radius:14px" title="{{ s.title }}" allow="clipboard-write"&gt;&lt;/iframe&gt;</textarea>
+              <button class="b b--sm mt-2" type="button" data-copy-from="#embIf" data-copy="">{% ic "copy" 15 %} کپی کد</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="c">
+        <div class="c__h">{% ic "tag" 18 %}<h2>لینک با فیلدهای مخفی</h2></div>
+        <div class="c__b">
+          {% if s.hidden_list %}
+          <p class="small muted mb-2">مقدار این فیلدها را در انتهای لینک بگذارید تا کنار هر پاسخ ذخیره شود (مثلاً منبع ورود کاربر):</p>
+          <div class="copy"><input class="form-control" id="hidUrl" readonly value="{{ url }}?{% for h in s.hidden_list %}{{ h }}=value{{ forloop.counter }}{% if not forloop.last %}&{% endif %}{% endfor %}">
+            <button class="b" type="button" data-copy-from="#hidUrl" data-copy="">{% ic "copy" 16 %}</button></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">{% for h in s.hidden_list %}<span class="pill mono">{{ h }}</span>{% endfor %}</div>
+          {% else %}
+          <p class="small muted mb-2">با فیلد مخفی می‌توانید بفهمید هر پاسخ از کدام کانال آمده؛ مثلاً
+            <code class="ltr">{{ url }}?utm_source=instagram</code></p>
+          {% if m.can_edit %}<a class="b b--sm" href="{% url 'surveys:settings' s.pk %}">{% ic "settings" 15 %} تعریف فیلد مخفی در تنظیمات</a>{% endif %}
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="c qrc">
+      <div class="c__h">{% ic "image" 18 %}<h2>کد QR</h2></div>
+      <div class="c__b text-center">
+        <img class="qrc__img" src="{% url 'surveys:qr' s.pk %}" alt="کد QR فرم {{ s.title }}" width="220" height="220">
+        <p class="small muted my-2">برای چاپ روی بروشور، بنر یا میز فروشگاه.</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+          <a class="b b--sm b--p" href="{% url 'surveys:qr' s.pk %}?format=png&amp;download=1">{% ic "download" 15 %} PNG</a>
+          <a class="b b--sm" href="{% url 'surveys:qr' s.pk %}?download=1">{% ic "download" 15 %} SVG (چاپی)</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+{% endblock %}

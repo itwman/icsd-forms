@@ -1,0 +1,69 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}فرم جدید — {{ site.short_name }}{% endblock %}
+{% block body %}
+<main class="main wrap">
+  <div class="ph">
+    <a class="b b--sm b--g" href="{% url 'surveys:dashboard' %}" title="بازگشت به فرم‌ها">{% ic "chevron" 18 cls="flip" %} فرم‌ها</a>
+    <h1>ساخت فرم جدید</h1>
+  </div>
+
+  {% if not ok %}
+  <div class="note note--warn mb-4">
+    {% ic "alert" 20 %}
+    <div><b>به سقف فرم‌های پلن «{{ plan.name }}» رسیده‌اید.</b>
+      <div class="small">این پلن حداکثر {{ plan.max_surveys|fa_num }} فرم دارد. برای ساخت فرم بیشتر، پلن را ارتقا دهید یا یک فرم قدیمی را حذف کنید.</div></div>
+    <a class="b b--p b--sm ms-auto" href="{% url 'billing:billing' %}">{% ic "sparkle" 15 %} ارتقای پلن</a>
+  </div>
+  {% endif %}
+
+  <div class="start">
+    <form class="c start__blank" method="post" action="{% url 'surveys:new' %}">{% csrf_token %}
+      {% if folder %}<input type="hidden" name="folder" value="{{ folder }}">{% endif %}
+      <div class="start__i">{% ic "plus" 26 %}</div>
+      <div class="flex-grow-1">
+        <h2>شروع از صفر</h2>
+        <p class="muted small mb-2">یک فرم خالی بسازید و سؤال‌ها را خودتان اضافه کنید.</p>
+        <label class="visually-hidden" for="ntitle">عنوان فرم</label>
+        <div class="d-flex gap-2 flex-wrap">
+          <input class="form-control" id="ntitle" name="title" maxlength="200" placeholder="عنوان فرم؛ مثلاً «نظرسنجی رضایت مشتری»" autofocus>
+          <button class="b b--p" type="submit" {% if not ok %}disabled{% endif %}>ساخت فرم {% ic "chevron" 16 %}</button>
+        </div>
+      </div>
+    </form>
+    <a class="c start__tpl" href="#tpls">
+      <div class="start__i start__i--2">{% ic "layout" 24 %}</div>
+      <div><h2>از قالب آماده</h2><p class="muted small mb-0">{{ templates|length|fa_num }} قالب حرفه‌ای؛ آماده‌ی ویرایش و انتشار.</p></div>
+    </a>
+  </div>
+
+  <section id="tpls" class="mt-5">
+    <div class="ph mb-2"><h2 class="h5 fw-bold m-0">قالب‌های آماده</h2></div>
+    <nav class="tags" aria-label="دسته‌ی قالب">
+      <a class="{% if not cat %}on{% endif %}" href="?{% if folder %}folder={{ folder }}{% endif %}#tpls">همه</a>
+      {% for k, v in cats %}<a class="{% if cat == k %}on{% endif %}" href="?cat={{ k }}{% if folder %}&folder={{ folder }}{% endif %}#tpls">{{ v }}</a>{% endfor %}
+    </nav>
+    {% if templates %}
+    <div class="tpls">
+      {% for t in templates %}
+      <div class="c tpl">
+        <div class="d-flex align-items-start gap-2"><span class="tpl__e">{{ t.emoji }}</span>
+          {% if t.is_featured %}<span class="pill pill--p ms-auto">{% ic "star" 12 %} پیشنهادی</span>{% endif %}</div>
+        <h3>{{ t.title }}</h3>
+        <p>{{ t.description|default:"قالب آماده؛ پس از انتخاب می‌توانید همه‌ی سؤال‌ها را تغییر دهید." }}</p>
+        <div class="d-flex gap-2 small muted"><span>{% ic "list" 14 %} {{ t.question_count|fa_num }} سؤال</span><span>·</span><span>{{ t.get_category_display }}</span></div>
+        <div class="tpl__a">
+          <form method="post" action="{% url 'surveys:new' %}">{% csrf_token %}
+            <input type="hidden" name="template" value="{{ t.slug }}">{% if folder %}<input type="hidden" name="folder" value="{{ folder }}">{% endif %}
+            <button class="b b--sm b--p" type="submit" {% if not ok %}disabled{% endif %}>استفاده از قالب</button>
+          </form>
+          <a class="b b--sm b--g" href="{% url 'surveys:template_preview' t.slug %}" target="_blank" rel="noopener">{% ic "eye" 15 %} پیش‌نمایش</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="c empty"><div class="empty__i">{% ic "layout" 30 %}</div><p class="mb-2">در این دسته هنوز قالبی نیست.</p><a class="b" href="?{% if folder %}folder={{ folder }}{% endif %}#tpls">همه‌ی قالب‌ها</a></div>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

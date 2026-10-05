@@ -1,0 +1,91 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}پاسخ‌های «{{ s.title }}» — {{ site.short_name }}{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" %}
+<main class="main wrap">
+  <div class="ph">
+    <div><h1>پاسخ‌ها</h1><div class="small muted">{{ page.paginator.count|fa_num }} پاسخ {% if status == "complete" %}کامل{% elif status == "partial" %}نیمه‌کاره{% else %}(کامل و نیمه‌کاره){% endif %}{% if q %} برای «{{ q }}»{% endif %}</div></div>
+    <div class="ph__a">
+      <a class="b b--sm" href="{% url 'surveys:export' s.pk 'csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">{% ic "download" 15 %} CSV</a>
+      {% if plan.export %}<a class="b b--sm b--p" href="{% url 'surveys:export' s.pk 'xlsx' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">{% ic "download" 15 %} اکسل</a>
+      {% else %}<a class="b b--sm" href="{% url 'billing:billing' %}" title="خروجی اکسل در پلن فعلی نیست">{% ic "lock" 15 %} اکسل <span class="lock">ارتقا</span></a>{% endif %}
+      {% if m.can_edit %}
+      <form method="post" action="{% url 'surveys:clear_tests' s.pk %}">{% csrf_token %}
+        <button class="b b--sm b--g" type="submit" data-confirm="همه‌ی پاسخ‌های آزمایشی (ثبت‌شده در پیش‌نمایش) پاک شوند؟" title="پاسخ‌های آزمایشی پیش‌نمایش در این فهرست نمی‌آیند">{% ic "trash" 15 %}<span class="d-none d-md-inline">پاک‌کردن پاسخ‌های آزمایشی</span></button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <form class="c fbar" method="get">
+    <div class="sinput flex-grow-1">{% ic "search" 17 %}<input class="form-control" type="search" name="q" value="{{ q }}" placeholder="جست‌وجو در پاسخ‌ها یا شماره‌ی پاسخ…" aria-label="جست‌وجو"></div>
+    <select class="form-select" name="status" style="width:auto" onchange="this.form.submit()" aria-label="وضعیت">
+      <option value="complete" {% if status == "complete" %}selected{% endif %}>کامل</option>
+      <option value="partial" {% if status == "partial" %}selected{% endif %}>نیمه‌کاره</option>
+      <option value="all" {% if status != "complete" and status != "partial" %}selected{% endif %}>همه</option>
+    </select>
+    <input class="form-control fbar__d" name="from" value="{{ request.GET.from }}" data-jdp data-jdp-only-date placeholder="از تاریخ" autocomplete="off" aria-label="از تاریخ">
+    <input class="form-control fbar__d" name="to" value="{{ request.GET.to }}" data-jdp data-jdp-only-date placeholder="تا تاریخ" autocomplete="off" aria-label="تا تاریخ">
+    {% if request.GET.fq %}<input type="hidden" name="fq" value="{{ request.GET.fq }}"><input type="hidden" name="fv" value="{{ request.GET.fv }}">{% endif %}
+    <button class="b b--p" type="submit">{% ic "filter" 16 %} اعمال</button>
+    {% if q or request.GET.from or request.GET.to or request.GET.fv or status != "complete" %}<a class="b b--g" href="{% url 'surveys:responses' s.pk %}">{% ic "x" 16 %} پاک‌کردن</a>{% endif %}
+  </form>
+
+  {% if page.object_list %}
+  <div class="c rtwrap">
+    <div class="table-responsive">
+      <table class="rt">
+        <thead><tr>
+          <th>#</th>
+          {% for c in cols %}<th title="{{ c.title|striptags }}">{{ c.title|striptags|truncatechars:28 }}</th>{% endfor %}
+          <th>تاریخ</th><th>مدت</th><th>دستگاه</th><th>وضعیت</th>
+        </tr></thead>
+        <tbody>
+          {% for r in page.object_list %}
+          <tr data-href="{% url 'surveys:response' s.pk r.pk %}">
+            <td><a class="mono small" href="{% url 'surveys:response' s.pk r.pk %}">{{ r.pk|fa_num }}</a></td>
+            {% for cell in r.cells %}<td class="rt__c">{% if cell %}{{ cell }}{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}
+            <td class="text-nowrap">{% if r.completed_at %}{{ r.completed_at|jdt }}{% else %}<span class="muted" title="زمان شروع">{{ r.started_at|jdt }}</span>{% endif %}</td>
+            <td class="text-nowrap">{% if r.completed_at %}{{ r.duration|dur }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td class="text-nowrap" title="{{ r.device }}">{% if r.device == "mobile" %}{% ic "phone" 15 %} موبایل{% elif r.device == "desktop" %}{% ic "monitor" 15 %} رایانه{% elif r.device == "tablet" %}{% ic "layout" 15 %} تبلت{% else %}—{% endif %}</td>
+            <td>{% if r.is_test %}<span class="pill">آزمایشی</span>{% elif r.completed_at %}<span class="pill pill--published">کامل</span>{% else %}<span class="pill pill--draft">نیمه‌کاره</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page.paginator.num_pages > 1 %}
+  <nav class="pager" aria-label="صفحه‌بندی">
+    {% if page.has_previous %}<a class="b b--sm" href="{% querystring page=page.previous_page_number %}">{% ic "chevron" 15 cls="flip" %} قبلی</a>{% else %}<span class="b b--sm is-off">{% ic "chevron" 15 cls="flip" %} قبلی</span>{% endif %}
+    {% for p in page.paginator.page_range %}
+      {% if p == page.number %}<span class="pager__n on" aria-current="page">{{ p|fa_num }}</span>
+      {% elif p == 1 or p == page.paginator.num_pages or p >= page.number|add:-2 and p <= page.number|add:2 %}<a class="pager__n" href="{% querystring page=p %}">{{ p|fa_num }}</a>
+      {% elif p == page.number|add:-3 or p == page.number|add:3 %}<span class="pager__n muted">…</span>{% endif %}
+    {% endfor %}
+    {% if page.has_next %}<a class="b b--sm" href="{% querystring page=page.next_page_number %}">بعدی {% ic "chevron" 15 %}</a>{% else %}<span class="b b--sm is-off">بعدی {% ic "chevron" 15 %}</span>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <div class="c empty">
+    <div class="empty__i">{% ic "inbox" 30 %}</div>
+    {% if q or request.GET.from or request.GET.to or request.GET.fv or status != "complete" %}
+      <h3 class="mb-1" style="color:var(--t)">پاسخی با این فیلتر پیدا نشد</h3><p class="mb-3">جست‌وجو یا فیلترها را تغییر دهید.</p>
+      <a class="b" href="{% url 'surveys:responses' s.pk %}">نمایش همه‌ی پاسخ‌های کامل</a>
+    {% else %}
+      <h3 class="mb-1" style="color:var(--t)">هنوز پاسخی ثبت نشده</h3><p class="mb-3">لینک فرم را بفرستید؛ پاسخ‌ها همین‌جا ظاهر می‌شوند.</p>
+      <a class="b b--p" href="{% url 'surveys:share' s.pk %}">{% ic "send" 16 %} اشتراک‌گذاری فرم</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('click', function (e) {
+  var tr = e.target.closest('tr[data-href]');
+  if (!tr || e.target.closest('a, button')) return;
+  if (e.ctrlKey || e.metaKey) { window.open(tr.dataset.href, '_blank'); } else { location.href = tr.dataset.href; }
+});
+</script>
+{% endblock %}

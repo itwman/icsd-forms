@@ -1,0 +1,235 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}فرم‌های من — {{ site.short_name }}{% endblock %}
+{% block body %}
+<div class="app">
+  {# ─── ستون کناری: فضای کاری، پوشه‌ها، وضعیت، مصرف ─── #}
+  <aside class="aside" id="aside">
+    <div class="dropdown wsw">
+      <button class="wsw__b" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="wsw__i">{{ ws.name|slice:":1" }}</span>
+        <span class="wsw__n"><b>{{ ws.name }}</b><small>{{ m.get_role_display }}</small></span>
+        {% ic "chevron-down" 16 %}
+      </button>
+      <ul class="dropdown-menu w-100">
+        <li><h6 class="dropdown-header">فضاهای کاری شما</h6></li>
+        {% for w in workspaces %}
+          <li><form method="post" action="{% url 'teams:switch' w.workspace_id %}">{% csrf_token %}
+            <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
+              {% if w.workspace_id == ws.pk %}{% ic "check" 16 %}{% else %}<span style="width:16px"></span>{% endif %}
+              <span class="text-truncate">{{ w.workspace.name }}</span>
+            </button></form></li>
+        {% endfor %}
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'teams:team' %}">{% ic "users" 16 %} مدیریت تیم و فضای کاری</a></li>
+      </ul>
+    </div>
+
+    <a class="ai {% if not folder and not status %}on{% endif %}" href="{% url 'surveys:dashboard' %}">{% ic "layout" 17 %} همه‌ی فرم‌ها <span class="cnt">{{ usage.surveys|fa_num }}</span></a>
+    <a class="ai {% if folder == 'none' %}on{% endif %}" href="?folder=none">{% ic "inbox" 17 %} بدون پوشه</a>
+
+    <h6 class="d-flex align-items-center">پوشه‌ها
+      {% if m.can_edit %}<button class="b b--sm b--g ms-auto p-1" type="button" data-bs-toggle="collapse" data-bs-target="#newFolder" title="پوشه‌ی جدید" aria-label="پوشه‌ی جدید">{% ic "plus" 15 %}</button>{% endif %}
+    </h6>
+    {% if m.can_edit %}
+    <form class="collapse fnew" id="newFolder" method="post" action="{% url 'surveys:folders' %}">{% csrf_token %}
+      <input type="hidden" name="act" value="create">
+      <input class="form-control form-control-sm" name="name" maxlength="80" placeholder="نام پوشه" required>
+      <button class="b b--p b--sm" type="submit">ساخت</button>
+    </form>
+    {% endif %}
+    {% for f in folders %}
+      <div class="frow">
+        <a class="ai {% if folder == f.pk|stringformat:'s' %}on{% endif %}" href="?folder={{ f.pk }}">{% ic "folder" 17 %} <span class="text-truncate">{{ f.name }}</span> <span class="cnt">{{ f.n|fa_num }}</span></a>
+        {% if m.can_edit %}
+        <div class="dropdown">
+          <button class="frow__m" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="گزینه‌های پوشه">{% ic "dots" 16 %}</button>
+          <div class="dropdown-menu p-2" style="min-width:230px">
+            <form method="post" action="{% url 'surveys:folders' %}" class="d-flex gap-1 mb-2">{% csrf_token %}
+              <input type="hidden" name="act" value="rename"><input type="hidden" name="id" value="{{ f.pk }}">
+              <input class="form-control form-control-sm" name="name" value="{{ f.name }}" maxlength="80" required aria-label="نام جدید">
+              <button class="b b--sm" type="submit">ذخیره</button>
+            </form>
+            <form method="post" action="{% url 'surveys:folders' %}">{% csrf_token %}
+              <input type="hidden" name="act" value="delete"><input type="hidden" name="id" value="{{ f.pk }}">
+              <button class="dropdown-item text-danger rounded" type="submit" data-confirm="پوشه‌ی «{{ f.name }}» حذف شود؟ فرم‌های داخلش حذف نمی‌شوند و «بدون پوشه» می‌شوند.">{% ic "trash" 15 %} حذف پوشه</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="small muted px-3 mb-0">هنوز پوشه‌ای نساخته‌اید.</p>
+    {% endfor %}
+
+    <h6>وضعیت</h6>
+    <a class="ai {% if status == 'published' %}on{% endif %}" href="?status=published{% if folder %}&folder={{ folder }}{% endif %}"><i class="dot dot--ok"></i> منتشر شده</a>
+    <a class="ai {% if status == 'draft' %}on{% endif %}" href="?status=draft{% if folder %}&folder={{ folder }}{% endif %}"><i class="dot dot--warn"></i> پیش‌نویس</a>
+    <a class="ai {% if status == 'closed' %}on{% endif %}" href="?status=closed{% if folder %}&folder={{ folder }}{% endif %}"><i class="dot dot--bad"></i> بسته</a>
+
+    <div class="usage">
+      <div class="d-flex align-items-center mb-2"><b>پلن {{ plan.name }}</b>{% if plan.is_free %}<span class="pill ms-auto">رایگان</span>{% else %}<span class="pill pill--p ms-auto">{% ic "star" 12 %} فعال</span>{% endif %}</div>
+      <div class="d-flex"><span>فرم‌ها</span><span class="ms-auto">{{ usage.surveys|fa_num }} / {% if plan.max_surveys %}{{ plan.max_surveys|fa_num }}{% else %}∞{% endif %}</span></div>
+      <div class="bar"><i style="width:{% if plan.max_surveys %}{% widthratio usage.surveys plan.max_surveys 100 %}{% else %}6{% endif %}%"></i></div>
+      <div class="d-flex"><span>پاسخ این ماه</span><span class="ms-auto">{{ usage.responses|fa_num }} / {% if plan.max_responses_month %}{{ plan.max_responses_month|fa_num }}{% else %}∞{% endif %}</span></div>
+      <div class="bar"><i style="width:{% if plan.max_responses_month %}{% widthratio usage.responses plan.max_responses_month 100 %}{% else %}6{% endif %}%"></i></div>
+      <a class="b b--sm {% if plan.is_free %}b--p{% endif %} w-100" href="{% url 'billing:billing' %}">{% ic "sparkle" 15 %} {% if plan.is_free %}ارتقای پلن{% else %}مدیریت اشتراک{% endif %}</a>
+    </div>
+  </aside>
+
+  {# ─── محتوای اصلی ─── #}
+  <main class="main">
+    <div class="ph">
+      <div>
+        <h1>{% if folder == "none" %}فرم‌های بدون پوشه{% elif folder %}{% for f in folders %}{% if f.pk|stringformat:"s" == folder %}{% ic "folder" 20 %} {{ f.name }}{% endif %}{% endfor %}{% else %}فرم‌های من{% endif %}</h1>
+        <div class="small muted">{{ surveys|length|fa_num }} فرم{% if q %} برای «{{ q }}»{% endif %} · <span>{% jtoday %}</span></div>
+      </div>
+      {% if m.can_edit %}<div class="ph__a"><a class="b b--p" href="{% url 'surveys:new' %}{% if folder and folder != 'none' %}?folder={{ folder }}{% endif %}">{% ic "plus" 18 %} فرم جدید</a></div>{% endif %}
+    </div>
+
+    <form class="toolbar" method="get" role="search">
+      {% if folder %}<input type="hidden" name="folder" value="{{ folder }}">{% endif %}
+      <div class="sinput">{% ic "search" 17 %}<input class="form-control" type="search" name="q" value="{{ q }}" placeholder="جست‌وجوی عنوان فرم…" aria-label="جست‌وجو"></div>
+      <select class="form-select" name="status" onchange="this.form.submit()" aria-label="وضعیت">
+        <option value="">همه‌ی وضعیت‌ها</option>
+        <option value="published" {% if status == 'published' %}selected{% endif %}>منتشر شده</option>
+        <option value="draft" {% if status == 'draft' %}selected{% endif %}>پیش‌نویس</option>
+        <option value="closed" {% if status == 'closed' %}selected{% endif %}>بسته</option>
+      </select>
+      <select class="form-select" name="sort" onchange="this.form.submit()" aria-label="مرتب‌سازی">
+        <option value="updated" {% if sort == 'updated' %}selected{% endif %}>آخرین ویرایش</option>
+        <option value="created" {% if sort == 'created' %}selected{% endif %}>تاریخ ساخت</option>
+        <option value="responses" {% if sort == 'responses' %}selected{% endif %}>بیشترین پاسخ</option>
+        <option value="title" {% if sort == 'title' %}selected{% endif %}>عنوان (الفبا)</option>
+      </select>
+      <button class="b" type="submit">{% ic "filter" 16 %} اعمال</button>
+      {% if q or status or folder %}<a class="b b--g" href="{% url 'surveys:dashboard' %}">{% ic "x" 16 %} حذف فیلترها</a>{% endif %}
+    </form>
+
+    {% if surveys %}
+    <div class="sgrid">
+      {% if m.can_edit and not q and not status %}
+      <a class="new-card" href="{% url 'surveys:new' %}{% if folder and folder != 'none' %}?folder={{ folder }}{% endif %}">
+        <span class="text-center"><span class="new-card__i">{% ic "plus" 26 %}</span>ساخت فرم جدید<small class="d-block fw-normal mt-1">از صفر یا با یک قالب آماده</small></span>
+      </a>
+      {% endif %}
+      {% for s in surveys %}
+      <article class="c scard">
+        <div class="scard__top scard__top--{{ s.status }}"></div>
+        <div class="scard__b">
+          <div class="d-flex align-items-center gap-1 flex-wrap">
+            <span class="pill pill--{{ s.status }}">{{ s.get_status_display }}</span>
+            {% if s.has_unpublished and s.published %}<span class="pill" title="تغییرات ذخیره شده ولی هنوز منتشر نشده">تغییر منتشرنشده</span>{% endif %}
+            {% if s.folder and not folder %}<span class="pill">{% ic "folder" 12 %} {{ s.folder.name }}</span>{% endif %}
+          </div>
+          <h3><a href="{% if m.can_edit %}{% url 'surveys:edit' s.pk %}{% else %}{% url 'surveys:results' s.pk %}{% endif %}">{{ s.title }}</a></h3>
+          <a class="scard__n" href="{% url 'surveys:responses' s.pk %}"><b>{{ s.response_count|fa_num }}</b> پاسخ</a>
+          <div class="scard__m">
+            <span title="آخرین پاسخ">{% ic "inbox" 14 %} {% if s.last_response %}{{ s.last_response|jdate }}{% else %}بدون پاسخ{% endif %}</span>
+            <span title="آخرین ویرایش">{% ic "clock" 14 %} {{ s.updated_at|jdate }}</span>
+          </div>
+        </div>
+        <div class="scard__f">
+          {% if m.can_edit %}<a class="b b--sm b--g" href="{% url 'surveys:edit' s.pk %}" title="طراحی">{% ic "edit" 16 %}<span class="d-none d-xl-inline">طراحی</span></a>{% endif %}
+          <a class="b b--sm b--g" href="{% url 'surveys:results' s.pk %}" title="نتایج">{% ic "bars" 16 %}<span class="d-none d-xl-inline">نتایج</span></a>
+          <a class="b b--sm b--g" href="{% url 'surveys:share' s.pk %}" title="اشتراک‌گذاری">{% ic "send" 16 %}</a>
+          <button class="b b--sm b--g" type="button" data-copy="{{ request.scheme }}://{{ request.get_host }}{{ s.get_absolute_url }}" title="کپی لینک">{% ic "link" 16 %}</button>
+          {% if m.can_edit %}
+          <div class="dropdown">
+            <button class="b b--sm b--g" type="button" data-bs-toggle="dropdown" aria-label="گزینه‌های بیشتر">{% ic "dots" 18 %}</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#renameModal" data-pk="{{ s.pk }}" data-title="{{ s.title }}">{% ic "edit" 15 %} تغییر نام</button></li>
+              <li><button class="dropdown-item" type="submit" form="act{{ s.pk }}" name="act" value="duplicate">{% ic "copy" 15 %} ساخت کپی</button></li>
+              <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#moveModal" data-pk="{{ s.pk }}" data-folder="{{ s.folder_id|default:'' }}">{% ic "folder" 15 %} انتقال به پوشه</button></li>
+              {% if s.status == "published" %}
+              <li><button class="dropdown-item" type="submit" form="act{{ s.pk }}" name="act" value="close">{% ic "lock" 15 %} بستن پاسخ‌گیری</button></li>
+              {% elif s.published %}
+              <li><button class="dropdown-item" type="submit" form="act{{ s.pk }}" name="act" value="open">{% ic "power" 15 %} بازکردن پاسخ‌گیری</button></li>
+              {% endif %}
+              <li><a class="dropdown-item" href="{% url 'surveys:preview' s.code %}" target="_blank">{% ic "eye" 15 %} پیش‌نمایش</a></li>
+              {% if user.is_staff %}<li><button class="dropdown-item" type="submit" form="act{{ s.pk }}" name="act" value="template">{% ic "star" 15 %} ذخیره به‌عنوان قالب</button></li>{% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item text-danger" type="submit" form="act{{ s.pk }}" name="act" value="delete" data-confirm="فرم «{{ s.title }}» و دسترسی به پاسخ‌هایش حذف شود؟">{% ic "trash" 15 %} حذف فرم</button></li>
+            </ul>
+          </div>
+          <form id="act{{ s.pk }}" method="post" action="{% url 'surveys:action' s.pk %}" hidden>{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"></form>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% elif q or status or folder %}
+    <div class="c empty">
+      <div class="empty__i">{% ic "search" 30 %}</div>
+      <h3 class="mb-1" style="color:var(--t)">فرمی پیدا نشد</h3>
+      <p class="mb-3">با این جست‌وجو یا فیلتر فرمی وجود ندارد.</p>
+      <a class="b" href="{% url 'surveys:dashboard' %}">نمایش همه‌ی فرم‌ها</a>
+      {% if m.can_edit and folder and folder != 'none' %}<a class="b b--p" href="{% url 'surveys:new' %}?folder={{ folder }}">{% ic "plus" 16 %} فرم جدید در این پوشه</a>{% endif %}
+    </div>
+    {% else %}
+    <div class="c empty empty--hero">
+      <div class="empty__i">{% ic "doc" 34 %}</div>
+      <h2>اولین فرمتان را بسازید</h2>
+      <p>نظرسنجی، آزمون، فرم ثبت‌نام یا سفارش — در چند دقیقه بسازید و لینکش را برای مخاطبان بفرستید.</p>
+      {% if m.can_edit %}<div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a class="b b--p b--lg" href="{% url 'surveys:new' %}">{% ic "plus" 18 %} ساخت فرم</a>
+        <a class="b b--lg" href="{% url 'surveys:new' %}#tpls">{% ic "layout" 18 %} انتخاب از قالب‌ها</a>
+      </div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if templates and m.can_edit %}
+    <section class="mt-5">
+      <div class="ph mb-3"><h2 class="h5 fw-bold m-0">{% ic "sparkle" 18 %} شروع سریع با قالب‌های آماده</h2>
+        <div class="ph__a"><a class="b b--sm b--g" href="{% url 'surveys:new' %}#tpls">همه‌ی قالب‌ها {% ic "chevron" 15 %}</a></div></div>
+      <div class="tstrip">
+        {% for t in templates %}
+        <div class="c tpl">
+          <div class="tpl__e">{{ t.emoji }}</div>
+          <h3>{{ t.title }}</h3>
+          <p>{{ t.description|truncatechars:90 }}</p>
+          <div class="tpl__a">
+            <form method="post" action="{% url 'surveys:new' %}">{% csrf_token %}<input type="hidden" name="template" value="{{ t.slug }}">
+              <button class="b b--sm b--p" type="submit">استفاده</button></form>
+            <a class="b b--sm b--g" href="{% url 'surveys:template_preview' t.slug %}" target="_blank">{% ic "eye" 15 %} پیش‌نمایش</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</div>
+
+{% if m.can_edit %}
+<div class="modal fade" id="renameModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" data-action="{% url 'surveys:action' 0 %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title fw-bold">تغییر نام فرم</h5><button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="بستن"></button></div>
+  <div class="modal-body"><input type="hidden" name="act" value="rename"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <label class="lbl" for="rnTitle">عنوان جدید</label><input class="form-control" id="rnTitle" name="title" maxlength="200" required></div>
+  <div class="modal-footer"><button class="b" type="button" data-bs-dismiss="modal">انصراف</button><button class="b b--p" type="submit">ذخیره</button></div>
+</form></div></div>
+<div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" data-action="{% url 'surveys:action' 0 %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title fw-bold">انتقال به پوشه</h5><button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="بستن"></button></div>
+  <div class="modal-body"><input type="hidden" name="act" value="move"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <label class="lbl" for="mvFolder">پوشه‌ی مقصد</label>
+    <select class="form-select" id="mvFolder" name="folder"><option value="">— بدون پوشه —</option>{% for f in folders %}<option value="{{ f.pk }}">{{ f.name }}</option>{% endfor %}</select>
+    {% if not folders %}<p class="help">هنوز پوشه‌ای ندارید؛ از ستون کنار «پوشه‌ها ←  +» بسازید.</p>{% endif %}</div>
+  <div class="modal-footer"><button class="b" type="button" data-bs-dismiss="modal">انصراف</button><button class="b b--p" type="submit">انتقال</button></div>
+</form></div></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  ['renameModal', 'moveModal'].forEach(function (id) {
+    var el = document.getElementById(id); if (!el) return;
+    el.addEventListener('show.bs.modal', function (e) {
+      var b = e.relatedTarget, f = el.querySelector('form');
+      f.action = f.dataset.action.replace('/0/', '/' + b.dataset.pk + '/');
+      if (id === 'renameModal') { f.elements.title.value = b.dataset.title; }
+      else { f.elements.folder.value = b.dataset.folder || ''; }
+    });
+    el.addEventListener('shown.bs.modal', function () { var i = el.querySelector('input:not([type=hidden]), select'); if (i) i.focus(); });
+  });
+})();
+</script>
+{% endblock %}

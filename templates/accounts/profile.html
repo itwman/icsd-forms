@@ -1,0 +1,56 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}پروفایل — {{ site.site_name }}{% endblock %}
+{% block body %}
+<div class="app">
+  {% include "accounts/_aside.html" with active="profile" %}
+  <main class="main">
+    <div class="ph"><h1>پروفایل و رمز عبور</h1></div>
+    <div class="acc-g">
+      <form method="post" enctype="multipart/form-data" class="c" novalidate>{% csrf_token %}
+        <div class="c__h">{% ic "user" 18 %}<h2>اطلاعات شما</h2></div>
+        <div class="c__b">
+          <div class="me">
+            <div class="me__av">{% if user.avatar %}<img src="{{ user.avatar.url }}" alt="">{% else %}{% if user.first_name %}{{ user.first_name|slice:":1" }}{% else %}{% ic "user" 26 %}{% endif %}{% endif %}</div>
+            <div>
+              <b>{{ user.display_name|fa_num }}</b>
+              <div class="small muted"><span class="ltr">{{ user.mobile|fa_num }}</span>
+                {% if user.mobile_verified %}<span class="pill pill--published ms-1">{% ic "check" 12 %} تأیید شده</span>{% endif %}</div>
+              <div class="small muted">عضو از {{ user.date_joined|jdate:"%d %B %Y" }}</div>
+            </div>
+          </div>
+          {% for e in form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ e }}</div>{% endfor %}
+          <div class="setg">
+            {% for f in form %}
+            <div class="{% if f.name == 'avatar' %}span2{% endif %}">
+              <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+              {{ f }}
+              {% if f.name == 'first_name' %}<div class="help">در فرم‌ها و فهرست اعضای تیم نمایش داده می‌شود.</div>{% endif %}
+              {% if f.name == 'email' %}<div class="help">اختیاری؛ برای ورود با ایمیل و رمز.</div>{% endif %}
+              {% for e in f.errors %}<div class="err mt-1">{{ e }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="c__f"><button class="b b--p" name="save_profile" value="1">{% ic "check" 16 %} ذخیره‌ی پروفایل</button></div>
+      </form>
+
+      <form method="post" class="c" novalidate>{% csrf_token %}
+        <div class="c__h">{% ic "lock" 18 %}<h2>{% if user.has_usable_password %}تغییر رمز عبور{% else %}تنظیم رمز عبور{% endif %}</h2></div>
+        <div class="c__b">
+          <p class="small muted">{% if user.has_usable_password %}رمز فعلی شما فعال است. برای تغییر، رمز جدید را دو بار وارد کنید.{% else %}با تنظیم رمز، می‌توانید بدون انتظار برای پیامک و با موبایل یا ایمیل وارد شوید.{% endif %}</p>
+          {% for e in pw_form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ e }}</div>{% endfor %}
+          {% for f in pw_form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+            {{ f }}
+            {% if f.name == 'password1' %}<div class="help">دست‌کم ۶ نویسه.</div>{% endif %}
+            {% for e in f.errors %}<div class="err mt-1">{{ e }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="c__f"><button class="b b--p" name="save_password" value="1">{% ic "key" 16 %} ذخیره‌ی رمز</button></div>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}

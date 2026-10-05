@@ -1,0 +1,27 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}نقش{% endblock %}
+{% block content %}
+<div class="crumb"><a href="{% url 'panel:roles' %}">نقش‌ها</a> / {{ group.name|default:"جدید" }}</div>
+<div class="ph"><h1>{% pi "shield" 24 %} {{ group.name|default:"نقش جدید" }}</h1></div>
+<form method="post">{% csrf_token %}
+<div class="fw">
+  <div class="c">
+    <div class="c__h"><h2>مجوزها</h2><span class="muted small ms-auto">روی عنوان ستون بزنید تا همه‌ی آن ستون انتخاب شود.</span></div>
+    <div class="tw"><table class="t pm"><thead><tr><th>بخش</th>{% for a, t in actions %}<th><a href="#" data-col="{{ a }}">{{ t }}</a></th>{% endfor %}<th><a href="#" data-col="all">همه</a></th></tr></thead><tbody>
+    {% for g in matrix %}<tr class="grp"><td colspan="6">{{ g.title }}</td></tr>
+      {% for row in g.rows %}<tr><td>{% pi row.r.icon 15 %} {{ row.r.title }}</td>
+        {% for a, p in row.cells %}<td>{% if p %}<input type="checkbox" class="form-check-input" name="perms" value="{{ p.pk }}" data-a="{{ a }}" {% if p.pk|in_set:current %}checked{% endif %} aria-label="{{ a }}">{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}
+        <td><input type="checkbox" class="form-check-input" data-rowall aria-label="همه"></td></tr>{% endfor %}
+    {% endfor %}</tbody></table></div>
+  </div>
+  <aside class="sticky-side">
+    <div class="c save-box"><div class="c__b">
+      <div class="fld"><label for="rn">نام نقش</label><input class="form-control" id="rn" name="name" value="{{ group.name }}" required></div>
+      <button class="b b--p" type="submit">{% pi "check" 16 %} ذخیره</button>
+      {% if group.pk %}<button class="b b--d" name="act" value="delete" onclick="return confirm('این نقش حذف شود؟ کاربرانش مجوزهای آن را از دست می‌دهند.')">{% pi "trash" 16 %} حذف نقش</button>{% endif %}
+    </div></div>
+    {% if members %}<div class="c"><div class="c__h"><h3>{% pi "users" %} کاربران این نقش</h3></div><ul class="lst">{% for u in members %}<li><a href="/panel/r/accounts-user/{{ u.pk }}/">{{ u }}</a></li>{% endfor %}</ul></div>{% endif %}
+  </aside>
+</div>
+</form>
+{% endblock %}

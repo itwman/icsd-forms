@@ -1,0 +1,21 @@
+{% extends "panel/base.html" %}{% load panel fa %}
+{% block title %}داشبورد{% endblock %}
+{% block content %}
+<div class="c hello mb-3"><h2>پنل مدیریت {{ site.site_name }}</h2><p>{{ today }} — {{ workspaces }} فضای کاری فعال روی سامانه.</p></div>
+<div class="grid g4 mb-3">
+  {% for k in kpis %}{% if k.url %}<a href="{{ k.url }}" class="c kpi kpi--{{ k.c }}">{% else %}<div class="c kpi kpi--{{ k.c }}">{% endif %}
+    <span class="kpi__i">{% pi k.i 22 %}</span><div><b>{{ k.v }}</b><span>{{ k.t }}</span></div>
+  {% if k.url %}</a>{% else %}</div>{% endif %}{% endfor %}
+</div>
+<div class="c mb-3"><div class="c__h"><h2>{% pi "bars" %} پاسخ‌های تکمیل‌شده — ۳۰ روز</h2><span class="muted small ms-auto">بیشینه: {{ peak }}</span></div>
+  <div class="c__b"><div class="chart">{% for p in series %}<div class="chart__b"><em>{{ p.label }} · {{ p.v|pfa }}</em><i style="height:{{ p.h }}%"></i></div>{% endfor %}</div>
+  <div class="chart__x"><span>{{ series.0.label }}</span><span>امروز</span></div></div></div>
+<div class="grid g3">
+  <div class="c"><div class="c__h"><h3>{% pi "doc" %} پرپاسخ‌ترین فرم‌ها</h3></div>
+    <ul class="lst">{% for s in top %}<li><a href="/panel/r/surveys/{{ s.pk }}/">{{ s.title|truncatechars:40 }}</a><span class="end">{{ s.response_count|pfa }}</span></li>{% empty %}<li class="muted">فرمی نیست.</li>{% endfor %}</ul></div>
+  <div class="c"><div class="c__h"><h3>{% pi "users" %} کاربران جدید</h3></div>
+    <ul class="lst">{% for u in new_users %}<li><a href="/panel/r/accounts-user/{{ u.pk }}/">{{ u }}</a><span class="end">{{ u.date_joined|pdate }}</span></li>{% endfor %}</ul></div>
+  <div class="c"><div class="c__h"><h3>{% pi "cart" %} آخرین پرداخت‌ها</h3></div>
+    <ul class="lst">{% for p in payments %}<li><span>{{ p.workspace }} · {{ p.plan }}</span><span class="end">{{ p.amount|toman }}</span></li>{% empty %}<li class="muted">پرداختی نیست.</li>{% endfor %}</ul></div>
+</div>
+{% endblock %}

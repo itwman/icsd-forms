@@ -1,0 +1,91 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}اشتراک و پرداخت — {{ site.site_name }}{% endblock %}
+{% block body %}
+<div class="app">
+  {% include "accounts/_aside.html" with active="billing" %}
+  <main class="main">
+    <div class="ph"><h1>اشتراک و پرداخت</h1><span class="pill">{% ic "folder" 12 %} {{ ws.name }}</span></div>
+
+    <div class="bill-g">
+      <section class="c curplan">
+        <div class="curplan__top">
+          <div class="feat__i">{% ic "award" 24 %}</div>
+          <div>
+            <div class="small muted">پلن فعلی</div>
+            <h2>{{ plan.name }}</h2>
+          </div>
+          {% if plan.is_free %}<span class="pill ms-auto">رایگان</span>{% else %}<span class="pill pill--published ms-auto">{% ic "check" 12 %} فعال</span>{% endif %}
+        </div>
+        <div class="curplan__meta">
+          {% if sub and sub.plan_id == plan.pk and sub.expires_at %}
+            {% if sub.is_active %}
+            <div>{% ic "clock" 16 %} اعتبار تا <b>{{ sub.expires_at|jdate:"%d %B %Y" }}</b> <span class="muted small">({{ sub.expires_at|timeuntil|fa_num }} دیگر)</span></div>
+            {% endif %}
+            <div class="small muted">شروع: {{ sub.started_at|jdate:"%d %B %Y" }}</div>
+          {% elif sub and not sub.is_active %}
+            <div class="text-danger">{% ic "alert" 16 %} اشتراک «{{ sub.plan.name }}» در {{ sub.expires_at|jdate:"%d %B %Y" }} به پایان رسید؛ اکنون روی پلن رایگان هستید.</div>
+          {% elif plan.is_free %}
+            <div>بدون محدودیت زمانی. هر وقت به امکانات بیشتر نیاز داشتید، ارتقا دهید.</div>
+          {% else %}
+            <div>{% ic "check" 16 %} بدون تاریخ انقضا</div>
+          {% endif %}
+        </div>
+        {% if plan.is_free %}<a class="b b--p mt-2" href="#plans">{% ic "sparkle" 16 %} ارتقای پلن</a>{% endif %}
+      </section>
+
+      <section class="c">
+        <div class="c__h">{% ic "chart" 18 %}<h2>مصرف این ماه</h2><span class="small muted ms-auto">{% jtoday %}</span></div>
+        <div class="c__b">
+          {% for lbl, used, mx, pct in bars %}
+          <div class="ubar{% if mx and pct >= 90 %} is-hot{% endif %}">
+            <div class="d-flex justify-content-between"><span>{{ lbl }}</span>
+              <span><b>{{ used|toman }}</b> <span class="muted">{% if mx %}از {{ mx|toman }}{% else %}· بدون سقف{% endif %}</span></span></div>
+            <div class="bar"><i style="width:{% if mx %}{{ pct }}{% else %}4{% endif %}%"></i></div>
+          </div>
+          {% endfor %}
+          <p class="help mb-0">شمارش پاسخ‌ها از ابتدای ماه شمسی جاری است.</p>
+        </div>
+      </section>
+    </div>
+
+    <section id="plans" class="mt-4" data-periods>
+      <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <h2 class="fs-5 mb-0">{% if plan.is_free %}ارتقا دهید و بیشتر بسازید{% else %}تمدید یا تغییر پلن{% endif %}</h2>
+        <div class="period mb-0 ms-auto" role="group" aria-label="دوره‌ی پرداخت">
+          <button type="button" data-p="monthly" class="on">ماهانه</button>
+          <button type="button" data-p="yearly">سالانه <span class="save">صرفه‌جویی</span></button>
+        </div>
+      </div>
+      {% if m.role != 'owner' %}<div class="alert alert-info small py-2">{% ic "lock" 15 %} خرید و تمدید اشتراک فقط با مالک فضای کاری است.</div>{% endif %}
+      <div class="plans">{% for p in plans %}{% include "core/_plan.html" with mode="billing" current=plan %}{% endfor %}</div>
+      <p class="small muted mt-3 mb-0">{% ic "shield" 14 %} پرداخت از درگاه امن زرین‌پال. با خرید دوباره‌ی همین پلن، مدت آن به اعتبار فعلی اضافه می‌شود.</p>
+    </section>
+
+    <section class="c mt-4">
+      <div class="c__h">{% ic "history" 18 %}<h2>تاریخچه‌ی پرداخت</h2></div>
+      {% if payments %}
+      <div class="table-responsive">
+        <table class="rt paytable">
+          <thead><tr><th>تاریخ</th><th>پلن</th><th>مدت</th><th>مبلغ (تومان)</th><th>وضعیت</th><th>کد پیگیری</th></tr></thead>
+          <tbody>
+            {% for pay in payments %}
+            <tr>
+              <td class="text-nowrap">{{ pay.created_at|jdt }}</td>
+              <td>{{ pay.plan.name }}</td>
+              <td class="text-nowrap">{% if pay.months == 12 %}یک سال{% else %}{{ pay.months|fa_num }} ماه{% endif %}</td>
+              <td class="text-nowrap"><b>{{ pay.amount|toman }}</b></td>
+              <td><span class="pill pill--{% if pay.status == 'paid' %}published{% elif pay.status == 'failed' %}closed{% else %}draft{% endif %}">{{ pay.get_status_display }}</span></td>
+              <td>{% if pay.ref_id %}<span class="mono">{{ pay.ref_id }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">{% ic "doc" 36 %}<p class="mt-2 mb-0">هنوز پرداختی ثبت نشده است.</p></div>
+      {% endif %}
+    </section>
+  </main>
+</div>
+{% endblock %}
+{% block scripts %}{% include "core/_period_js.html" %}{% endblock %}

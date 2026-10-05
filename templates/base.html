@@ -1,0 +1,50 @@
+{% load static ui %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ site.site_name }} — {{ site.tagline }}{% endblock %}</title>
+<meta name="description" content="{% block desc %}{{ site.meta_description }}{% endblock %}">
+{% block robots %}{% endblock %}
+{% if site.favicon %}<link rel="icon" href="{{ site.favicon.url }}">{% else %}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endif %}
+<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<style>:root{--p:{{ site.color_primary|default:"#1E9E7B" }};--p2:{{ site.color_accent|default:"#16A9C7" }};}</style>
+{{ site.head_extra_html|safe }}
+{% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% block nav %}
+<header class="nav"><div class="wrap nav__in">
+  <a class="brand" href="{% url 'core:home' %}">{% if site.logo %}<img src="{{ site.logo.url }}" alt="{{ site.site_name }}">{% else %}<span class="brand__dot">{% ic "doc" 18 %}</span>{% endif %}<span>{{ site.short_name }}</span></a>
+  <nav class="nav__links">
+    <a href="{% url 'core:templates' %}">قالب‌ها</a>
+    <a href="{% url 'core:pricing' %}">تعرفه‌ها</a>
+    <a href="{% url 'core:home' %}#features">امکانات</a>
+  </nav>
+  <span class="nav__sp"></span>
+  {% if user.is_authenticated %}
+    {% if user.is_staff %}<a class="b b--sm b--g" href="{% url 'panel:dashboard' %}">{% ic "shield" 16 %} مدیریت</a>{% endif %}
+    <a class="b b--p" href="{% url 'surveys:dashboard' %}">{% ic "dashboard" 16 %} فرم‌های من</a>
+  {% else %}
+    <a class="b b--g" href="{% url 'accounts:login' %}">ورود</a>
+    <a class="b b--p" href="{% url 'accounts:login' %}?next=/app/new/">ساخت فرم رایگان</a>
+  {% endif %}
+</div></header>
+{% endblock %}
+{% block body %}<main>{% block content %}{% endblock %}</main>{% endblock %}
+{% block footer %}
+<footer class="footer"><div class="wrap footer__g">
+  <div><b>{{ site.site_name }}</b> — {{ site.footer_text }}{% if site.address %}<br><span class="muted">{{ site.address }}</span>{% endif %}</div>
+  <div class="d-flex gap-3 flex-wrap">{% for p in footer_pages %}<a href="{{ p.get_absolute_url }}">{{ p.title }}</a>{% endfor %}<a href="{% url 'core:pricing' %}">تعرفه‌ها</a>
+    {% if site.support_phone %}<span class="ltr">{{ site.support_phone }}</span>{% endif %}</div>
+</div></footer>
+{% endblock %}
+<div class="toasts" id="toasts">{% for m in messages %}<div class="toast-i {{ m.tags }}">{{ m }}<button type="button" aria-label="بستن">✕</button></div>{% endfor %}</div>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

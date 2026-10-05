@@ -1,0 +1,54 @@
+{% load ui fa %}{# کارت پلن — mode: pricing | billing | teaser؛ متغیر p #}
+<div class="c plan{% if p.is_highlighted %} hl{% endif %}{% if mode == 'billing' and current and p.pk == current.pk %} plan--cur{% endif %}">
+  {% if mode == 'billing' and current and p.pk == current.pk %}<span class="plan__badge plan__badge--cur">پلن فعلی شما</span>
+  {% elif p.is_highlighted %}<span class="plan__badge">{% ic "star" 12 %} محبوب‌ترین</span>{% endif %}
+  <h3>{{ p.name }}</h3>
+  <p class="desc">{{ p.description }}</p>
+  <div class="price">
+    {% if p.is_free %}۰ <small>تومان — برای همیشه</small>
+    {% else %}
+      <span data-per="monthly">{{ p.price_monthly|toman }} <small>تومان / ماه</small></span>
+      <span data-per="yearly" hidden>{{ p.price_yearly|toman }} <small>تومان / سال</small></span>
+    {% endif %}
+  </div>
+  <div class="plan__sub">
+    {% if p.is_free %}بدون نیاز به کارت بانکی
+    {% elif p.price_yearly and p.price_monthly %}{% widthratio p.price_yearly p.price_monthly 1 as eqm %}{% widthratio p.price_yearly 12 1 as pm %}
+      <span data-per="monthly">{% if eqm|add:0 < 12 %}با خرید سالانه فقط هزینه‌ی {{ eqm|fa_num }} ماه را بپردازید{% else %}قابل پرداخت ماهانه یا سالانه{% endif %}</span>
+      <span data-per="yearly" hidden>معادل ماهی {{ pm|toman }} تومان</span>
+    {% endif %}
+  </div>
+  <ul>
+    <li>{% ic "check" 16 %} {% if p.max_surveys %}{{ p.max_surveys|fa_num }} فرم فعال{% else %}<b>فرم نامحدود</b>{% endif %}</li>
+    <li>{% ic "check" 16 %} {% if p.max_responses_month %}{{ p.max_responses_month|toman }} پاسخ در ماه{% else %}<b>پاسخ نامحدود</b>{% endif %}</li>
+    <li>{% ic "check" 16 %} {% if p.max_members == 1 %}تک‌کاربره{% elif p.max_members %}تا {{ p.max_members|fa_num }} عضو تیم{% else %}<b>اعضای تیم نامحدود</b>{% endif %}</li>
+    {% if mode != 'teaser' %}
+    {% for lbl, ok in p.feature_list %}<li class="{% if not ok %}no{% endif %}">{% if ok %}{% ic "check" 16 %}{% else %}{% ic "x" 16 %}{% endif %} {{ lbl }}</li>{% endfor %}
+    {% if p.file_upload %}<li>{% ic "check" 16 %} هر فایل تا {{ p.max_upload_mb|fa_num }} مگابایت</li>{% endif %}
+    {% endif %}
+  </ul>
+  <div class="plan__cta">
+  {% if mode == 'billing' %}
+    {% if p.is_free %}
+      {% if current and p.pk == current.pk %}<button class="b w-100 is-off" type="button">پلن فعلی</button>
+      {% else %}<span class="small muted d-block text-center">پس از پایان اشتراک، خودکار به این پلن برمی‌گردید.</span>{% endif %}
+    {% elif m.role == 'owner' %}
+      <form method="post" action="{% url 'billing:checkout' %}">{% csrf_token %}
+        <input type="hidden" name="plan" value="{{ p.slug }}"><input type="hidden" name="period" value="monthly" data-period-input>
+        <button class="b {% if p.is_highlighted or current and p.pk == current.pk %}b--p{% endif %} w-100">{% ic "cart" 16 %} {% if current and p.pk == current.pk %}تمدید اشتراک{% else %}خرید {{ p.name }}{% endif %}</button>
+      </form>
+    {% else %}<span class="small muted d-block text-center">{% ic "lock" 14 %} فقط مالک فضای کاری می‌تواند اشتراک بخرد.</span>{% endif %}
+  {% elif user.is_authenticated %}
+    {% if p.is_free %}<a class="b w-100" href="{% url 'surveys:dashboard' %}">ورود به فرم‌های من</a>
+    {% elif user.current_workspace and user.current_workspace.owner_id == user.id %}
+      <form method="post" action="{% url 'billing:checkout' %}">{% csrf_token %}
+        <input type="hidden" name="plan" value="{{ p.slug }}"><input type="hidden" name="period" value="monthly" data-period-input>
+        <button class="b {% if p.is_highlighted %}b--p{% endif %} w-100">{% ic "cart" 16 %} خرید پلن {{ p.name }}</button>
+      </form>
+    {% else %}<a class="b {% if p.is_highlighted %}b--p{% endif %} w-100" href="{% url 'billing:billing' %}#plans">انتخاب پلن {{ p.name }}</a>{% endif %}
+  {% else %}
+    {% if p.is_free %}<a class="b w-100" href="{% url 'accounts:login' %}?next=/app/new/">شروع رایگان</a>
+    {% else %}<a class="b {% if p.is_highlighted %}b--p{% endif %} w-100" href="{% url 'accounts:login' %}?next={% url 'billing:billing' %}">شروع با {{ p.name }}</a>{% endif %}
+  {% endif %}
+  </div>
+</div>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block title %}{{ page.title }} — {{ site.site_name }}{% endblock %}
+{% block desc %}{{ page.body|striptags|truncatewords:30 }}{% endblock %}
+{% block content %}
+<section class="sec">
+  <div class="wrap wrap--narrow">
+    <article class="c prose">
+      <header class="prose__h">
+        <h1>{{ page.title }}</h1>
+        <span class="small muted">{% ic "clock" 14 %} آخرین به‌روزرسانی: {{ page.updated_at|jdate:"%d %B %Y" }}</span>
+      </header>
+      <div class="prose__b">{% if "<" in page.body %}{{ page.body|safe }}{% else %}{{ page.body|linebreaks }}{% endif %}</div>
+    </article>
+    {% if footer_pages|length > 1 %}
+    <nav class="tags tags--c mt-4">{% for p in footer_pages %}<a href="{{ p.get_absolute_url }}" class="{% if p.pk == page.pk %}on{% endif %}">{{ p.title }}</a>{% endfor %}</nav>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

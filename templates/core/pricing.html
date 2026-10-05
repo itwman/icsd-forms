@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block title %}تعرفه‌ها — {{ site.site_name }}{% endblock %}
+{% block desc %}قیمت پلن‌های {{ site.site_name }}: رایگان شروع کنید و برای فرم و پاسخ بیشتر، کار تیمی و امکانات حرفه‌ای ارتقا دهید.{% endblock %}
+{% block content %}
+<section class="sec pricing" data-periods>
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">تعرفه‌ها</span>
+      <h1 class="h2like">پلنی که با رشد شما بزرگ می‌شود</h1>
+      <p>رایگان شروع کنید و هر وقت به فرم و پاسخ بیشتر، کار تیمی یا امکانات حرفه‌ای نیاز داشتید، در یک دقیقه ارتقا دهید.</p>
+    </div>
+    <div class="text-center">
+      <div class="period" role="group" aria-label="دوره‌ی پرداخت">
+        <button type="button" data-p="monthly" class="on">ماهانه</button>
+        <button type="button" data-p="yearly">سالانه <span class="save">صرفه‌جویی</span></button>
+      </div>
+    </div>
+    <div class="plans">{% for p in plans %}{% include "core/_plan.html" with mode="pricing" %}{% endfor %}</div>
+    <p class="text-center small muted mt-3">{% ic "shield" 14 %} پرداخت امن از درگاه زرین‌پال · قیمت‌ها به تومان است</p>
+
+    {% if plans %}
+    <div class="c cmp mt-5">
+      <div class="c__h"><h2>مقایسه‌ی کامل امکانات</h2></div>
+      <div class="cmp__scroll">
+        <table class="mt cmp__t">
+          <thead><tr><th>امکان</th>{% for p in plans %}<th>{{ p.name }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            <tr><td>تعداد فرم</td>{% for p in plans %}<td>{% if p.max_surveys %}{{ p.max_surveys|fa_num }}{% else %}نامحدود{% endif %}</td>{% endfor %}</tr>
+            <tr><td>پاسخ در ماه</td>{% for p in plans %}<td>{% if p.max_responses_month %}{{ p.max_responses_month|toman }}{% else %}نامحدود{% endif %}</td>{% endfor %}</tr>
+            <tr><td>اعضای تیم</td>{% for p in plans %}<td>{% if p.max_members %}{{ p.max_members|fa_num }}{% else %}نامحدود{% endif %}</td>{% endfor %}</tr>
+            <tr><td>حجم هر فایل</td>{% for p in plans %}<td>{% if p.file_upload %}{{ p.max_upload_mb|fa_num }} مگابایت{% else %}—{% endif %}</td>{% endfor %}</tr>
+            <tr><td>۲۰+ نوع سؤال و تاریخ شمسی</td>{% for p in plans %}<td class="yes">{% ic "check" 18 %}</td>{% endfor %}</tr>
+            <tr><td>گزارش و نمودار زنده</td>{% for p in plans %}<td class="yes">{% ic "check" 18 %}</td>{% endfor %}</tr>
+            {% for key, flbl in features %}
+            <tr><td>{{ flbl }}</td>{% for p in plans %}<td>{% for lbl, ok in p.feature_list %}{% if lbl == flbl %}{% if ok %}<span class="yes">{% ic "check" 18 %}</span>{% else %}<span class="muted">{% ic "x" 16 %}</span>{% endif %}{% endif %}{% endfor %}</td>{% endfor %}</tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if faqs %}
+<section class="sec sec--alt">
+  <div class="wrap wrap--narrow">
+    <div class="sec__h"><span class="kick">پرسش‌های پرتکرار</span><h2>قبل از خرید بدانید</h2></div>
+    {% include "core/_faq.html" %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec">
+  <div class="wrap"><div class="cta">
+    <h2>هنوز مطمئن نیستید؟ رایگان امتحان کنید</h2>
+    <p>پلن رایگان محدودیت زمانی ندارد. هر وقت آماده بودید، ارتقا دهید.</p>
+    <a class="b b--lg" href="{% if user.is_authenticated %}{% url 'surveys:new' %}{% else %}{% url 'accounts:login' %}?next=/app/new/{% endif %}">{% ic "sparkle" 18 %} ساخت فرم رایگان</a>
+  </div></div>
+</section>
+{% endblock %}
+{% block scripts %}{% include "core/_period_js.html" %}{% endblock %}

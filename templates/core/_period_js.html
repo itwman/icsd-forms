@@ -1,0 +1,14 @@
+<script>
+/* سوییچ ماهانه/سالانه برای کارت‌های پلن */
+(function () {
+  document.querySelectorAll('[data-periods]').forEach(function (box) {
+    var set = function (per) {
+      box.querySelectorAll('.period button').forEach(function (b) { var on = b.dataset.p === per; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+      box.querySelectorAll('[data-per]').forEach(function (el) { el.hidden = el.dataset.per !== per; });
+      box.querySelectorAll('[data-period-input]').forEach(function (i) { i.value = per; });
+    };
+    box.querySelectorAll('.period button').forEach(function (b) { b.addEventListener('click', function () { set(b.dataset.p); }); });
+    set('monthly');
+  });
+})();
+</script>

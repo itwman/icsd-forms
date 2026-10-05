@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load ui %}
+{% block title %}صفحه پیدا نشد — {{ site.site_name|default:"فرم‌ساز ICSD" }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<section class="nf">
+  <div class="wrap text-center">
+    <div class="nf__code" aria-hidden="true">۴<span>۰</span>۴</div>
+    <h1>این صفحه را پیدا نکردیم</h1>
+    <p class="muted">شاید لینک اشتباه کپی شده، فرم حذف شده یا آدرس تغییر کرده باشد. نگران نباشید؛ از این‌جا ادامه دهید:</p>
+    <div class="hero__btns justify-content-center mt-3">
+      <a class="b b--p" href="{% url 'core:home' %}">{% ic "home" 16 %} صفحه‌ی اصلی</a>
+      {% if user.is_authenticated %}<a class="b" href="{% url 'surveys:dashboard' %}">{% ic "dashboard" 16 %} فرم‌های من</a>
+      {% else %}<a class="b" href="{% url 'core:templates' %}">{% ic "layout" 16 %} قالب‌های آماده</a>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

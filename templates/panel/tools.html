@@ -1,0 +1,17 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}ابزارها{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "tool" 24 %} ابزارها و پشتیبان</h1></div>
+<div class="grid g2" style="align-items:start">
+  <div class="c"><div class="c__h"><h2>{% pi "database" %} عملیات</h2></div>
+    <form method="post" class="c__b" style="display:grid;gap:12px">{% csrf_token %}
+      <div class="fld--switch fld"><button class="b b--p" name="act" value="backup">{% pi "download" 16 %} دریافت پشتیبان</button><div class="help">همه‌ی محتوا، تنظیمات، کاربران و نقش‌ها در یک فایل JSON (بدون فایل‌های رسانه). برای بازگردانی: <span class="ltr mono">manage.py loaddata</span></div></div>
+      <div class="fld--switch fld"><button class="b" name="act" value="cache">{% pi "refresh" 16 %} پاک کردن کش</button><div class="help">اگر تغییر تنظیمات بلافاصله در سایت دیده نشد.</div></div>
+      
+      <div class="fld--switch fld"><button class="b" name="act" value="cleanup" onclick="return confirm('داده‌های قدیمی غیرضروری پاک شود؟')">{% pi "trash" 16 %} پاک‌سازی</button><div class="help">کدهای پیامکی منقضی و بازدیدهای ربات‌ها (قدیمی‌تر از ۳۰ روز).</div></div>
+    </form></div>
+  <div class="c"><div class="c__h"><h2>{% pi "monitor" %} اطلاعات سیستم</h2></div>
+    <ul class="lst">{% for k, v in info %}<li><span>{{ k }}</span><span class="end">{{ v }}</span></li>{% endfor %}</ul>
+    <div class="c__b"><a class="b" href="/django-admin/">{% pi "lock" 16 %} ادمین فنی جنگو</a></div></div>
+</div>
+{% endblock %}

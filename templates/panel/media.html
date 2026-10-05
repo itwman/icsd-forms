@@ -1,0 +1,42 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}رسانه‌ها{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "image" 24 %} کتابخانه‌ی رسانه</h1>
+  <div class="ph__act">
+    <form method="post" action="{% url 'panel:media_mkdir' %}" class="d-flex gap-2">{% csrf_token %}<input type="hidden" name="dir" value="{{ folder }}"><input class="form-control" name="name" placeholder="نام پوشه‌ی جدید" style="width:160px" dir="ltr"><button class="b" type="submit">{% pi "folder" 16 %} پوشه</button></form>
+  </div>
+  <div class="sub">همه‌ی فایل‌های آپلودشده‌ی سایت. آدرس هر فایل را کپی کنید یا در فرم‌ها با «از کتابخانه» انتخابش کنید. فرمت‌های مجاز: تصویر، PDF، ZIP، EPUB، اسناد آفیس، ویدیو و صوت (حداکثر ۵۰ مگابایت).</div>
+</div>
+<div class="c mb-3"><form method="post" action="{% url 'panel:media_upload' %}" enctype="multipart/form-data" class="c__b" style="display:block" id="upform">{% csrf_token %}
+  <input type="hidden" name="dir" value="{{ folder }}">
+  <label class="drop w-100" id="drop" style="cursor:pointer">{% pi "upload" 28 %}<div>فایل‌ها را اینجا رها کنید یا کلیک کنید</div><small>مقصد: <span class="ltr">/media/{{ folder|default:"uploads/سال/ماه" }}</span></small>
+    <input type="file" name="files" multiple hidden onchange="this.form.submit()"></label>
+</form></div>
+<div class="c">
+  <form method="get" class="tools-bar"><input type="hidden" name="dir" value="{{ folder }}">
+    <div class="s">{% pi "search" 16 %}<input class="form-control" name="q" value="{{ q }}" placeholder="جستجوی نام فایل در این پوشه و زیرپوشه‌ها"></div>
+    <select class="form-select" name="kind" style="width:auto" onchange="this.form.submit()"><option value="">همه‌ی فایل‌ها</option><option value="image" {% if kind == "image" %}selected{% endif %}>فقط تصویر</option><option value="doc" {% if kind == "doc" %}selected{% endif %}>اسناد و فایل‌ها</option></select>
+    <button class="b">جستجو</button>
+    <span class="muted small ms-auto"><a href="?">media</a>{% for name, rel in crumbs %} / <a href="?dir={{ rel }}">{{ name }}</a>{% endfor %}</span>
+  </form>
+  {% if dirs and not q %}<div class="d-grid gap-2 p-3" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">
+    {% if folder %}<a class="md" href="?dir={{ crumbs|slice:':-1'|last|last|default:'' }}">{% pi "chevron" 16 %} بالا</a>{% endif %}
+    {% for d in dirs %}<a class="md" href="?dir={{ d.rel }}">{% pi "folder" 18 %} <span class="ltr">{{ d.name }}</span></a>{% endfor %}</div>
+  {% elif folder and not q %}<div class="p-3"><a class="md" style="max-width:170px" href="?dir={{ crumbs|slice:':-1'|last|last|default:'' }}">{% pi "chevron" 16 %} بالا</a></div>{% endif %}
+  {% if page.object_list %}
+  <div class="mg">{% for f in page %}
+    <div class="mi">
+      <div class="mi__p">{% if f.img %}<img src="{{ f.url }}" alt="" loading="lazy">{% else %}<span class="ext">{{ f.ext }}</span>{% endif %}</div>
+      <div class="mi__m"><b title="{{ f.rel }}">{{ f.name }}</b><span>{{ f.size }} · {{ f.date }}</span></div>
+      <div class="mi__a">
+        <button type="button" data-copy="{{ f.url }}" title="کپی آدرس">{% pi "copy" 14 %}</button>
+        <a href="{{ f.url }}" target="_blank" title="باز کردن">{% pi "external" 14 %}</a>
+        {% if can_delete %}<form method="post" action="{% url 'panel:media_delete' %}" onsubmit="return confirm('این فایل برای همیشه حذف شود؟ اگر جایی استفاده شده باشد، آنجا خراب می‌شود.')">{% csrf_token %}<input type="hidden" name="rel" value="{{ f.rel }}"><input type="hidden" name="back" value="{{ request.get_full_path }}"><button title="حذف">{% pi "trash" 14 %}</button></form>{% endif %}
+      </div>
+    </div>{% endfor %}</div>
+  {% elif not dirs %}<div class="empty">{% pi "image" 46 %}<div>فایلی نیست.</div></div>{% endif %}
+  {% if page.has_other_pages %}<div class="pager"><span>صفحه‌ی {{ page.number|pfa }} از {{ page.paginator.num_pages|pfa }}</span><div class="d-flex gap-2">
+    {% if page.has_previous %}<a class="b b--sm" href="?dir={{ folder }}&q={{ q }}&kind={{ kind }}&page={{ page.previous_page_number }}">قبلی</a>{% endif %}
+    {% if page.has_next %}<a class="b b--sm" href="?dir={{ folder }}&q={{ q }}&kind={{ kind }}&page={{ page.next_page_number }}">بعدی</a>{% endif %}</div></div>{% endif %}
+</div>
+{% endblock %}

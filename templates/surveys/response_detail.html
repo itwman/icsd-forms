@@ -1,0 +1,108 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}پاسخ #{{ r.pk }} — {{ s.title }}{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" %}
+<main class="main wrap">
+  <div class="ph">
+    <a class="b b--sm b--g noprint" href="{% url 'surveys:responses' s.pk %}">{% ic "chevron" 16 cls="flip" %} همه‌ی پاسخ‌ها</a>
+    <h1>پاسخ شماره‌ی {{ r.pk|fa_num }}</h1>
+    {% if r.is_test %}<span class="pill">آزمایشی</span>{% elif r.completed_at %}<span class="pill pill--published">کامل</span>{% else %}<span class="pill pill--draft">نیمه‌کاره</span>{% endif %}
+    <div class="ph__a noprint">
+      {% if prev %}<a class="b b--sm" href="{% url 'surveys:response' s.pk prev %}" title="پاسخ قبلی">{% ic "chevron" 15 cls="flip" %} قبلی</a>{% else %}<span class="b b--sm is-off">{% ic "chevron" 15 cls="flip" %} قبلی</span>{% endif %}
+      {% if next %}<a class="b b--sm" href="{% url 'surveys:response' s.pk next %}" title="پاسخ بعدی">بعدی {% ic "chevron" 15 %}</a>{% else %}<span class="b b--sm is-off">بعدی {% ic "chevron" 15 %}</span>{% endif %}
+      <button class="b b--sm" type="button" onclick="window.print()">{% ic "doc" 15 %} چاپ</button>
+      {% if m.can_edit %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="act" value="delete">
+        <button class="b b--sm b--d" type="submit" data-confirm="پاسخ شماره‌ی {{ r.pk|fa_num }} برای همیشه حذف شود؟">{% ic "trash" 15 %} حذف</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rdg">
+    <section class="c rd">
+      {% for it in items %}
+      {% with q=it.q v=it.raw %}
+      <div class="answer {% if not it.visited %}skip{% endif %}">
+        <h4><span class="qnum qnum--sm">{{ forloop.counter|fa_num }}</span> {{ q.title|striptags|default:"(بدون عنوان)" }}</h4>
+        {% if not it.visited %}
+          <div class="small muted">{% ic "redirect" 14 %} این سؤال در مسیر پاسخ‌دهنده نبود (منطق شرطی).</div>
+        {% elif not it.value %}
+          <div class="small muted">— بی‌پاسخ</div>
+        {% elif q.type == "choice" or q.type == "dropdown" %}
+          <div class="chips">
+            {% for c in q.opt.choices %}{% if q.opt.multiple and c.id in v or not q.opt.multiple and c.id == v %}<span class="chip">{% ic "check" 13 %} {{ c.label }}</span>{% endif %}{% endfor %}
+            {% if v == "__other__" or q.opt.multiple and "__other__" in v %}{% with okey=q.id|add:"__other" %}<span class="chip">{{ q.opt.other_label|default:"سایر" }}: {{ r.answers|get:okey|default:"—" }}</span>{% endwith %}{% endif %}
+          </div>
+        {% elif q.type == "yes_no" %}
+          <span class="chip {% if v == 'no' %}chip--no{% endif %}">{% if v == "yes" %}{% ic "check" 13 %}{% else %}{% ic "x" 13 %}{% endif %} {{ it.value }}</span>
+        {% elif q.type == "rating" %}
+          <div class="stars" aria-label="{{ v }} از {{ q.opt.max }}">{% for _ in "x"|rjust:q.opt.max %}<span class="{% if forloop.counter <= v %}on{% endif %}">{% ic "star" 18 %}</span>{% endfor %}
+            <b class="ms-2">{{ v|fa_num }}</b><span class="muted small"> از {{ q.opt.max|fa_num }}</span></div>
+        {% elif q.type == "scale" %}
+          <div class="scalev"><b>{{ v|fa_num }}</b><span class="muted small">در طیف {{ q.opt.min|fa_num }} ({{ q.opt.min_label|default:"کم" }}) تا {{ q.opt.max|fa_num }} ({{ q.opt.max_label|default:"زیاد" }})</span></div>
+        {% elif q.type == "matrix" %}
+          <div class="table-responsive"><table class="mt mt--ans">
+            <thead><tr><th></th>{% for c in q.opt.cols %}<th>{{ c.label }}</th>{% endfor %}</tr></thead>
+            <tbody>{% for row in q.opt.rows %}{% with sel=v|get:row.id %}<tr><td>{{ row.label }}</td>
+              {% for c in q.opt.cols %}<td>{% if q.opt.multiple and c.id in sel or not q.opt.multiple and c.id == sel %}<span class="tick">{% ic "check" 14 %}</span>{% else %}<span class="dotc"></span>{% endif %}</td>{% endfor %}
+            </tr>{% endwith %}{% endfor %}</tbody>
+          </table></div>
+        {% elif q.type == "ranking" %}
+          <ol class="rank rank--sm">{% for x in v %}{% for i in q.opt.items %}{% if i.id == x %}<li><span class="rank__n">{{ forloop.parentloop.counter|fa_num }}</span>{{ i.label }}</li>{% endif %}{% endfor %}{% endfor %}</ol>
+        {% elif q.type == "signature" %}
+          <a href="{{ v.url }}" target="_blank" rel="noopener" class="sigimg"><img src="{{ v.url }}" alt="امضای پاسخ‌دهنده"></a>
+        {% elif q.type == "file" %}
+          <a class="files__f" href="{{ v.url }}" target="_blank" rel="noopener">{% ic "download" 16 %} <span class="text-truncate">{{ v.name|default:"دریافت فایل" }}</span></a>
+        {% elif q.type == "location" %}
+          <div>{% ic "map" 16 %} {{ it.value }}</div>
+        {% elif q.type == "consent" %}
+          <span class="chip">{% ic "check" 13 %} تأیید شد</span> <span class="small muted">{{ q.opt.label }}</span>
+        {% elif q.type == "email" %}
+          <a class="ltr d-inline-block" style="color:var(--p)" href="mailto:{{ v }}">{{ v }}</a>
+        {% elif q.type == "mobile" or q.type == "phone" %}
+          <a class="ltr d-inline-block" style="color:var(--p)" href="tel:{{ v }}">{{ v|fa_num }}</a>
+        {% elif q.type == "url" %}
+          <a class="ltr d-inline-block text-break" style="color:var(--p)" href="{{ v }}" target="_blank" rel="noopener nofollow">{{ v }}</a>
+        {% elif q.type == "number" or q.type == "price" or q.type == "date" or q.type == "national_code" %}
+          <div class="fw-bold">{{ it.value|fa_num }}</div>
+        {% elif q.type == "long_text" %}
+          <div class="ltext">{{ it.value|linebreaksbr }}</div>
+        {% else %}
+          <div>{{ it.value }}</div>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="empty"><p class="m-0">این فرم سؤالی ندارد.</p></div>
+      {% endfor %}
+    </section>
+
+    <aside class="d-grid gap-3 align-content-start rd__meta">
+      <section class="c">
+        <div class="c__h">{% ic "clock" 18 %}<h2>اطلاعات پاسخ</h2></div>
+        <dl class="meta">
+          <dt>شروع</dt><dd>{{ r.started_at|jdate:"%A %d %B %Y — %H:%M" }}</dd>
+          <dt>تکمیل</dt><dd>{% if r.completed_at %}{{ r.completed_at|jdate:"%A %d %B %Y — %H:%M" }}{% else %}<span class="muted">تکمیل نشده</span>{% endif %}</dd>
+          {% if r.completed_at %}<dt>مدت پاسخ‌دهی</dt><dd>{{ r.duration|dur }}</dd>{% endif %}
+          <dt>دستگاه</dt><dd>{% if r.device == "mobile" %}{% ic "phone" 14 %} موبایل{% elif r.device == "desktop" %}{% ic "monitor" 14 %} رایانه{% elif r.device == "tablet" %}{% ic "layout" 14 %} تبلت{% else %}—{% endif %}</dd>
+          {% if r.mobile %}<dt>موبایل تأییدشده</dt><dd class="ltr text-end">{{ r.mobile|fa_num }}</dd>{% endif %}
+          {% if ending %}<dt>صفحه‌ی پایان</dt><dd>{{ ending.title|striptags|default:"پیش‌فرض" }}</dd>{% endif %}
+          <dt>نسخه‌ی فرم</dt><dd>{{ r.version|fa_num }}</dd>
+        </dl>
+      </section>
+      {% if vars %}
+      <section class="c">
+        <div class="c__h">{% ic "sparkle" 18 %}<h2>متغیرها و امتیاز</h2></div>
+        <dl class="meta">{% for k, v in vars %}<dt>{{ k }}</dt><dd><b>{{ v|fa_num }}</b></dd>{% endfor %}</dl>
+      </section>
+      {% endif %}
+      {% if r.hidden %}
+      <section class="c">
+        <div class="c__h">{% ic "tag" 18 %}<h2>فیلدهای مخفی</h2></div>
+        <dl class="meta">{% for k, v in r.hidden.items %}<dt class="mono">{{ k }}</dt><dd class="ltr text-end text-break">{{ v|default:"—" }}</dd>{% endfor %}</dl>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block title %}ورود / ثبت‌نام — {{ site.site_name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+{% with pw=pass_form.is_bound %}
+<section class="auth">
+  <div class="auth__wrap">
+    <div class="c auth__box">
+      <div class="auth__ic">{% ic "user" 26 %}</div>
+      <h1>ورود یا ثبت‌نام</h1>
+      <p class="muted mb-3">شماره موبایلتان را وارد کنید تا کد ورود برایتان پیامک شود. اگر حساب ندارید، همین حالا ساخته می‌شود.</p>
+
+      <div class="atabs" role="tablist">
+        <button type="button" role="tab" data-tab="otp" class="{% if not pw %}on{% endif %}" aria-selected="{% if pw %}false{% else %}true{% endif %}">{% ic "phone" 16 %} کد پیامکی</button>
+        <button type="button" role="tab" data-tab="pass" class="{% if pw %}on{% endif %}" aria-selected="{% if pw %}true{% else %}false{% endif %}">{% ic "key" 16 %} رمز عبور</button>
+      </div>
+
+      <form method="post" class="apane" data-pane="otp" {% if pw %}hidden{% endif %} novalidate>{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        <label class="form-label" for="{{ mobile_form.mobile.id_for_label }}">{{ mobile_form.mobile.label }}</label>
+        {{ mobile_form.mobile }}
+        {% for e in mobile_form.mobile.errors %}<div class="err mt-1">{{ e }}</div>{% endfor %}
+        <button class="b b--p b--lg w-100 mt-3" name="send_code" value="1">دریافت کد ورود {% ic "chevron" 18 %}</button>
+      </form>
+
+      <form method="post" class="apane" data-pane="pass" {% if not pw %}hidden{% endif %} novalidate>{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% for e in pass_form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ e }}</div>{% endfor %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ pass_form.ident.id_for_label }}">{{ pass_form.ident.label }}</label>
+          {{ pass_form.ident }}
+          {% for e in pass_form.ident.errors %}<div class="err mt-1">{{ e }}</div>{% endfor %}
+        </div>
+        <div>
+          <label class="form-label" for="{{ pass_form.password.id_for_label }}">{{ pass_form.password.label }}</label>
+          {{ pass_form.password }}
+          {% for e in pass_form.password.errors %}<div class="err mt-1">{{ e }}</div>{% endfor %}
+        </div>
+        <button class="b b--p b--lg w-100 mt-3" name="with_password" value="1">ورود {% ic "chevron" 18 %}</button>
+        <p class="help text-center mt-2">رمز را بعد از اولین ورود، از صفحه‌ی پروفایل تنظیم کنید.</p>
+      </form>
+
+      <p class="auth__terms">ورود شما به معنای پذیرش <a href="{% url 'core:page' 'terms' %}">قوانین</a> و <a href="{% url 'core:page' 'privacy' %}">حریم خصوصی</a> است.</p>
+    </div>
+    <ul class="auth__perks">
+      <li>{% ic "sparkle" 16 %} ساخت فرم رایگان، بدون کارت بانکی</li>
+      <li>{% ic "shield" 16 %} اطلاعات شما روی سرور داخل ایران</li>
+      <li>{% ic "team" 16 %} دعوت همکاران با شماره موبایل</li>
+    </ul>
+  </div>
+</section>
+{% endwith %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.atabs [data-tab]');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.toggle('on', x === t); x.setAttribute('aria-selected', x === t); });
+      document.querySelectorAll('.apane').forEach(function (p) { p.hidden = p.dataset.pane !== t.dataset.tab; });
+      var f = document.querySelector('.apane[data-pane="' + t.dataset.tab + '"] input:not([type=hidden])'); if (f) f.focus();
+    });
+  });
+})();
+</script>
+{% endblock %}

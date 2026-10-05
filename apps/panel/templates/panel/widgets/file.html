@@ -1,0 +1,12 @@
+{% load panel %}<div class="fileb" data-file>
+  <div class="fileb__p" data-prev>{% if widget.url and widget.is_image %}<img src="{{ widget.url }}" alt="">{% elif widget.url %}{% pi "doc" 26 %}{% else %}{% pi "image" 24 %}{% endif %}</div>
+  <div class="fileb__b">
+    <div class="fileb__n" data-name>{% if widget.url %}<a href="{{ widget.url }}" target="_blank" class="ltr">{{ widget.fname }}</a>{% else %}<span class="muted">فایلی انتخاب نشده</span>{% endif %}</div>
+    <div class="fileb__a">
+      <label class="b b--sm mb-0">{% pi "upload" 14 %} انتخاب فایل<input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %} hidden></label>
+      <button type="button" class="b b--sm" data-pick>{% pi "folder" 14 %} از کتابخانه</button>
+      {% if widget.url and not widget.required %}<label class="b b--sm b--d mb-0"><input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}" class="form-check-input m-0"> حذف</label>{% endif %}
+    </div>
+    <input type="hidden" name="{{ widget.pick_name }}" data-pickval>
+  </div>
+</div>

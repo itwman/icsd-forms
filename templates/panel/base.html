@@ -1,0 +1,72 @@
+{% load static panel %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}پنل مدیریت{% endblock %} · {{ site.short_name|default:"ICSD" }}</title>
+{% if site.favicon %}<link rel="icon" href="{{ site.favicon.url }}">{% else %}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endif %}
+<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/tom-select/tom-select.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/ckeditor-rtl.css' %}">
+<link rel="stylesheet" href="{% static 'css/seo-panel.css' %}">
+<link rel="stylesheet" href="{% static 'panel/panel.css' %}">
+<style>:root{--p:{{ site.color_primary|default:"#1E9E7B" }};--p2:{{ site.color_accent|default:"#16A9C7" }};}</style>
+<script>try{var t=localStorage.getItem('panel-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="pl">
+  <aside class="side" id="side">
+    <a class="side__brand" href="{% url 'panel:dashboard' %}">
+      {% if site.logo %}<img src="{{ site.logo.url }}" alt="">{% else %}<span class="dot">{% pi "sparkle" 18 %}</span>{% endif %}
+      <span>{{ site.short_name|default:"ICSD" }}<small>پنل مدیریت سایت</small></span>
+    </a>
+    <nav aria-label="منوی پنل">
+      <a class="ni {% if active == 'dashboard' %}on{% endif %}" href="{% url 'panel:dashboard' %}">{% pi "dashboard" %} داشبورد</a>
+      {% for g in nav %}
+        <h6>{{ g.title }}</h6>
+        {% for it in g.items %}<a class="ni {% if it.active %}on{% endif %}" href="{{ it.url }}">{% pi it.icon %} {{ it.title }}{% if it.badge %}<span class="bdg">{{ it.badge|pfa }}</span>{% endif %}</a>{% endfor %}
+      {% endfor %}
+    </nav>
+    <div class="side__foot">{{ site.site_name }}<br><a href="/app/" style="color:var(--side-m)">پیشخوان کاربری</a></div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <button class="ib burger" type="button" id="burger" aria-label="منو">{% pi "menu" %}</button>
+      <form class="gsearch" action="{% url 'panel:search' %}" role="search" autocomplete="off">
+        {% pi "search" 17 %}<input name="q" id="gq" placeholder="جستجو در همه‌ی بخش‌ها…" aria-label="جستجو"><kbd>Ctrl K</kbd>
+        <div class="gsearch__res" id="gres"></div>
+      </form>
+      <span class="top__sp"></span>
+      <a class="ib" href="/" target="_blank" title="مشاهده‌ی سامانه">{% pi "external" %}</a>
+      <button class="ib" type="button" id="theme" title="روز / شب">{% pi "moon" %}</button>
+      <div class="dropdown">
+        <button class="me dropdown-toggle" data-bs-toggle="dropdown" type="button" aria-expanded="false" style="cursor:pointer">
+          <span class="av">{% if user.avatar %}<img src="{{ user.avatar.url }}" alt="">{% else %}{{ user.first_name|slice:":1"|default:"م" }}{% endif %}</span>
+          <div><b>{{ user.get_full_name|default:user.mobile }}</b><small>{% if user.is_superuser %}مدیر ارشد{% else %}{{ user.groups.first|default:"کارمند" }}{% endif %}</small></div>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-start">
+          <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">{% pi "user" 16 %} پروفایل و رمز عبور</a></li>
+          <li><a class="dropdown-item" href="/" target="_blank">{% pi "globe" 16 %} مشاهده‌ی سایت</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">{% pi "logout" 16 %} خروج</a></li>
+        </ul>
+      </div>
+    </header>
+    <main class="content" id="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<div class="toasts" id="toasts">{% for m in messages %}<div class="toast-i {{ m.tags }}">{{ m }}<button type="button" aria-label="بستن">✕</button></div>{% endfor %}</div>
+{% include "panel/partials/media_modal.html" %}
+<script>window.PANEL = {csrf: "{{ csrf_token }}", media: "{% url 'panel:media' %}", upload: "{% url 'panel:media_upload' %}", search: "{% url 'panel:search' %}", ac: "/panel/api/ac/"};</script>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/tom-select/tom-select.complete.min.js' %}"></script>
+<script src="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.js' %}"></script>
+<script src="{% static 'panel/panel.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

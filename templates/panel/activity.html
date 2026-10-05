@@ -1,0 +1,14 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}تاریخچه{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "history" 24 %} تاریخچه‌ی تغییرات</h1><div class="sub">هر افزودن، ویرایش و حذفی که در پنل انجام شده، با نام کاربر و زمان.</div></div>
+<div class="c"><div class="tw"><table class="t"><thead><tr><th>زمان</th><th>کاربر</th><th>عمل</th><th>بخش</th><th>مورد</th><th>جزئیات</th></tr></thead><tbody>
+{% for e in page %}<tr><td class="mono">{{ e.action_time|pdate }}</td><td><a href="?user={{ e.user_id }}">{{ e.user.get_full_name|default:e.user }}</a></td>
+  <td><span class="pill {% if e.action_flag == 1 %}pill--new{% elif e.action_flag == 3 %}pill--lost{% endif %}">{% if e.action_flag == 1 %}افزودن{% elif e.action_flag == 2 %}ویرایش{% else %}حذف{% endif %}</span></td>
+  <td>{{ e.res_title }}</td><td>{% if e.panel_url %}<a href="{{ e.panel_url }}">{{ e.object_repr|truncatechars:50 }}</a>{% else %}{{ e.object_repr|truncatechars:50 }}{% endif %}</td>
+  <td class="muted small">{{ e.change_message|truncatechars:80 }}</td></tr>
+{% empty %}<tr><td colspan="6" class="empty">هنوز تغییری ثبت نشده.</td></tr>{% endfor %}
+</tbody></table></div>
+{% if page.has_other_pages %}<div class="pager"><span>صفحه‌ی {{ page.number|pfa }} از {{ page.paginator.num_pages|pfa }}</span><div class="d-flex gap-2">{% if page.has_previous %}<a class="b b--sm" href="?page={{ page.previous_page_number }}">قبلی</a>{% endif %}{% if page.has_next %}<a class="b b--sm" href="?page={{ page.next_page_number }}">بعدی</a>{% endif %}</div></div>{% endif %}
+</div>
+{% endblock %}

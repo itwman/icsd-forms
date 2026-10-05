@@ -1,0 +1,36 @@
+{% load static %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="same-origin">
+<title>{% if s %}{{ s.title }}{% elif tpl %}{{ tpl.title }}{% else %}فرم{% endif %}</title>
+<meta name="theme-color" content="{{ theme.primary|default:'#1E9E7B' }}">
+{% if site.favicon %}<link rel="icon" href="{{ site.favicon.url }}">{% else %}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endif %}
+<link rel="preload" href="{% static 'vendor/vazirmatn/Vazirmatn[wght].woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/runner.css' %}">
+<style>:root{--p:{{ theme.primary|default:'#1E9E7B' }};--bg:{{ theme.bg|default:'#F6F7F4' }};--card:{{ theme.card|default:'#FFFFFF' }};--t:{{ theme.text|default:'#16303A' }};}</style>
+</head>
+<body class="rn{% if embed %} is-embed{% endif %}{% if preview %} is-preview{% endif %}">
+{% if preview %}
+<div class="rn-banner" role="note">
+  <span class="rn-banner__dot" aria-hidden="true"></span>
+  {% if tpl %}<b>پیش‌نمایش قالب</b><span class="rn-banner__sub">«{{ tpl.title }}» — پاسخ‌ها ذخیره نمی‌شوند.</span>
+  {% else %}<b>پیش‌نمایش</b><span class="rn-banner__sub">پاسخ‌ها به‌صورت «آزمایشی» ثبت می‌شوند و در آمار شمرده نمی‌شوند.</span>{% endif %}
+  <button type="button" class="rn-banner__btn" data-restart>شروع دوباره</button>
+</div>
+{% endif %}
+<div id="rn-bg" class="rn-bg" aria-hidden="true"></div>
+<main id="app" class="rn-app">
+  <div class="rn-loading" role="status"><span class="rn-spin" aria-hidden="true"></span><span>در حال بارگذاری فرم…</span></div>
+  <noscript><div class="rn-noscript">برای پر کردن این فرم، جاوااسکریپت مرورگر را فعال کنید.</div></noscript>
+</main>
+{{ boot|json_script:"boot" }}
+<script>window.RN_HOME = "{% url 'core:home' %}";</script>
+<script src="{% static 'vendor/jalali-datepicker/jalalidatepicker.min.js' %}"></script>
+<script src="{% static 'vendor/sortable/Sortable.min.js' %}"></script>
+<script src="{% static 'js/runner.js' %}"></script>
+</body>
+</html>

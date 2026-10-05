@@ -1,0 +1,15 @@
+{% load panel %}
+<div class="modal fade" id="mediaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="background:var(--card);color:var(--t);border-radius:18px">
+      <div class="modal-header gap-2">
+        <h5 class="modal-title" style="font-weight:800">{% pi "image" %} کتابخانه‌ی رسانه</h5>
+        <input class="form-control form-control-sm" id="mmq" placeholder="جستجوی نام فایل…" style="max-width:240px">
+        <label class="b b--sm b--p mb-0">{% pi "upload" 15 %} آپلود<input type="file" id="mmup" multiple hidden></label>
+        <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="بستن"></button>
+      </div>
+      <div class="modal-body p-0"><div class="px-3 pt-2 small muted" id="mmpath"></div><div class="mg" id="mmgrid"></div></div>
+      <div class="modal-footer justify-content-between"><span class="small muted">روی فایل کلیک کنید تا انتخاب شود.</span><div class="d-flex gap-2" id="mmpager"></div></div>
+    </div>
+  </div>
+</div>

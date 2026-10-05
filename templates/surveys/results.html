@@ -1,0 +1,221 @@
+{% extends "app_base.html" %}{% load static ui fa %}
+{% block title %}نتایج «{{ s.title }}» — {{ site.short_name }}{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" %}
+<main class="main wrap">
+  <div class="ph">
+    <div><h1>خلاصه‌ی نتایج</h1>
+      <div class="small muted">بر اساس {{ n|fa_num }} پاسخ {% if status == "complete" %}کامل{% elif status == "partial" %}نیمه‌کاره{% else %}(کامل و نیمه‌کاره){% endif %}{% if f.from or f.to or f.fv %} · با فیلتر{% endif %}</div></div>
+    <div class="ph__a">
+      <a class="b b--sm" href="{% url 'surveys:export' s.pk 'csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">{% ic "download" 15 %} CSV</a>
+      {% if plan.export %}
+      <a class="b b--sm b--p" href="{% url 'surveys:export' s.pk 'xlsx' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">{% ic "download" 15 %} اکسل</a>
+      {% else %}
+      <a class="b b--sm" href="{% url 'billing:billing' %}" title="خروجی اکسل در پلن فعلی نیست">{% ic "lock" 15 %} اکسل <span class="lock">ارتقا</span></a>
+      {% endif %}
+      <button class="b b--sm b--g" type="button" onclick="window.print()" title="چاپ گزارش">{% ic "doc" 15 %}<span class="d-none d-md-inline">چاپ</span></button>
+    </div>
+  </div>
+
+  {# ─── فیلترها ─── #}
+  <form class="c fbar" method="get" id="rsFilter">
+    <div class="seg" role="group" aria-label="وضعیت پاسخ">
+      <input type="radio" class="btn-check" name="status" id="st1" value="complete" {% if status == "complete" %}checked{% endif %} onchange="this.form.submit()"><label for="st1">کامل</label>
+      <input type="radio" class="btn-check" name="status" id="st2" value="partial" {% if status == "partial" %}checked{% endif %} onchange="this.form.submit()"><label for="st2">نیمه‌کاره</label>
+      <input type="radio" class="btn-check" name="status" id="st3" value="all" {% if status != "complete" and status != "partial" %}checked{% endif %} onchange="this.form.submit()"><label for="st3">همه</label>
+    </div>
+    <input class="form-control fbar__d" name="from" value="{{ f.from }}" data-jdp data-jdp-only-date placeholder="از تاریخ" autocomplete="off" aria-label="از تاریخ">
+    <input class="form-control fbar__d" name="to" value="{{ f.to }}" data-jdp data-jdp-only-date placeholder="تا تاریخ" autocomplete="off" aria-label="تا تاریخ">
+    {% if filterable %}
+    <select class="form-select fbar__q" name="fq" id="fq" aria-label="فیلتر بر اساس سؤال">
+      <option value="">فیلتر بر اساس پاسخ سؤال…</option>
+      {% for q in filterable %}<option value="{{ q.id }}" {% if f.fq == q.id %}selected{% endif %}>{{ q.title|striptags|truncatechars:48 }}</option>{% endfor %}
+    </select>
+    <select class="form-select fbar__v" name="fv" id="fv" aria-label="گزینه">
+      <option value="">گزینه…</option>
+      {% for q in filterable %}
+        {% if q.type == "yes_no" %}
+          <option data-q="{{ q.id }}" value="yes" {% if f.fq == q.id and f.fv == "yes" %}selected{% endif %}>{{ q.opt.yes_label|default:"بله" }}</option>
+          <option data-q="{{ q.id }}" value="no" {% if f.fq == q.id and f.fv == "no" %}selected{% endif %}>{{ q.opt.no_label|default:"خیر" }}</option>
+        {% else %}
+          {% for c in q.opt.choices %}<option data-q="{{ q.id }}" value="{{ c.id }}" {% if f.fq == q.id and f.fv == c.id %}selected{% endif %}>{{ c.label|truncatechars:40 }}</option>{% endfor %}
+          {% if q.opt.other %}<option data-q="{{ q.id }}" value="__other__" {% if f.fq == q.id and f.fv == "__other__" %}selected{% endif %}>{{ q.opt.other_label|default:"سایر" }}</option>{% endif %}
+        {% endif %}
+      {% endfor %}
+    </select>
+    {% endif %}
+    <button class="b b--p" type="submit">{% ic "filter" 16 %} اعمال</button>
+    {% if f.from or f.to or f.fv or status != "complete" %}<a class="b b--g" href="{% url 'surveys:results' s.pk %}">{% ic "x" 16 %} پاک‌کردن</a>{% endif %}
+  </form>
+
+  {# ─── شاخص‌ها ─── #}
+  <div class="kpis">
+    <div class="c kpi"><span class="kpi__i">{% ic "users" 18 %}</span><b>{{ started|fa_num }}</b><span>شروع‌کرده</span></div>
+    <div class="c kpi"><span class="kpi__i kpi__i--ok">{% ic "check" 18 %}</span><b>{{ completed|fa_num }}</b><span>پاسخ کامل</span></div>
+    <div class="c kpi"><span class="kpi__i kpi__i--2">{% ic "target" 18 %}</span><b>{{ rate|fa_num }}٪</b><span>نرخ تکمیل</span>
+      <div class="bar"><i style="width:{{ rate }}%"></i></div></div>
+    <div class="c kpi"><span class="kpi__i kpi__i--3">{% ic "clock" 18 %}</span><b class="kpi__dur">{{ avg_dur|dur }}</b><span>میانه‌ی زمان پاسخ‌دهی</span></div>
+  </div>
+
+  {# ─── روند، قیف، دستگاه‌ها ─── #}
+  <div class="rgrid">
+    <section class="c">
+      <div class="c__h">{% ic "chart" 18 %}<h2>روند پاسخ‌های کامل — ۳۰ روز اخیر</h2></div>
+      <div class="c__b"><div class="chartbox chartbox--line"><canvas id="tlChart" aria-label="نمودار روند پاسخ‌ها" role="img"></canvas></div></div>
+    </section>
+    <div class="d-grid gap-3 align-content-start">
+      <section class="c">
+        <div class="c__h">{% ic "monitor" 18 %}<h2>دستگاه پاسخ‌دهندگان</h2></div>
+        <div class="c__b hb">
+          {% for k, c in devices %}
+          <div class="hb__r"><span class="l">{% if k == "mobile" %}{% ic "phone" 14 %} موبایل{% elif k == "desktop" %}{% ic "monitor" 14 %} رایانه{% elif k == "tablet" %}{% ic "layout" 14 %} تبلت{% else %}نامشخص{% endif %}</span>
+            <span class="v">{% widthratio c n 100 as dp %}{{ dp|fa_num }}٪</span><div class="bar"><i style="width:{{ dp }}%"></i></div></div>
+          {% empty %}<p class="muted small m-0">داده‌ای نیست.</p>{% endfor %}
+        </div>
+      </section>
+      <section class="c">
+        <div class="c__h">{% ic "filter" 18 %}<h2>قیف ریزش</h2><span class="qstat__n ms-auto">کجا رها کرده‌اند؟</span></div>
+        <div class="c__b hb">
+          {% for x in funnel %}
+          <div class="hb__r hb__r--bad"><span class="l" title="{{ x.title|striptags }}">{{ x.title|striptags|truncatechars:60 }}</span><span class="v">{{ x.n|fa_num }} نفر</span>
+            <div class="bar"><i style="width:{% widthratio x.n funnel.0.n 100 %}%"></i></div></div>
+          {% empty %}<p class="muted small m-0">{% ic "check" 15 %} هیچ پاسخ نیمه‌کاره‌ای ثبت نشده.</p>{% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  {% if var_stats %}
+  <section class="c mb-3">
+    <div class="c__h">{% ic "sparkle" 18 %}<h2>متغیرها و امتیاز</h2></div>
+    <div class="c__b vgrid">
+      {% for v in var_stats %}
+      <div class="vbox"><h4>{{ v.label }}</h4>
+        {% if v.kind == "num" %}
+        <div class="nums"><div><small>میانگین</small><b>{{ v.avg|fa_num }}</b></div><div><small>کمینه</small><b>{{ v.min|fa_num }}</b></div><div><small>بیشینه</small><b>{{ v.max|fa_num }}</b></div></div>
+        {% else %}
+        <div class="hb">{% for r in v.rows %}<div class="hb__r"><span class="l">{{ r.label }}</span><span class="v">{{ r.n|fa_num }} · {{ r.pct|fa_num }}٪</span><div class="bar"><i style="width:{{ r.pct }}%"></i></div></div>{% endfor %}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ─── سؤال به سؤال ─── #}
+  <div class="ph mt-4 mb-3"><h2 class="h5 fw-bold m-0">سؤال به سؤال</h2></div>
+  {% if not n %}
+  <div class="c empty">
+    <div class="empty__i">{% ic "inbox" 30 %}</div>
+    <h3 class="mb-1" style="color:var(--t)">{% if f.from or f.to or f.fv %}با این فیلتر پاسخی نیست{% else %}هنوز پاسخی ثبت نشده{% endif %}</h3>
+    <p class="mb-3">{% if f.from or f.to or f.fv %}بازه یا فیلتر را تغییر دهید.{% else %}لینک فرم را برای مخاطبانتان بفرستید؛ نتایج همین‌جا زنده نمایش داده می‌شوند.{% endif %}</p>
+    <a class="b b--p" href="{% url 'surveys:share' s.pk %}">{% ic "send" 16 %} اشتراک‌گذاری فرم</a>
+  </div>
+  {% else %}
+  {% for st in stats %}
+  <section class="c qstat" id="qs-{{ st.q.id }}">
+    <div class="qstat__h">
+      <span class="qnum">{{ forloop.counter|fa_num }}</span>
+      <h3>{{ st.q.title|striptags|default:"(بدون عنوان)" }} <span class="pill ms-1 align-middle">{{ st.label }}</span></h3>
+      <span class="qstat__n">{{ st.answered|fa_num }} پاسخ{% if st.skipped %} · {{ st.skipped|fa_num }} بی‌پاسخ{% endif %}</span>
+    </div>
+
+    {% if st.kind == "bars" %}
+      <div class="qstat__b {% if not st.pie and st.avg is None and not st.nps %}one{% endif %}">
+        <div class="hb">
+          {% for r in st.rows %}
+          <div class="hb__r"><span class="l" title="{{ r.label }}">{{ r.label }}</span><span class="v">{{ r.n|fa_num }} · {{ r.pct|fa_num }}٪</span>
+            <div class="bar"><i style="width:{{ r.pct }}%;{% if st.pie %}background:var(--c{{ forloop.counter0 }}){% endif %}"></i></div></div>
+          {% endfor %}
+        </div>
+        {% if st.pie %}
+          <div class="chartbox chartbox--pie"><canvas data-chart="{{ forloop.counter0 }}" role="img" aria-label="نمودار دایره‌ای {{ st.q.title|striptags }}"></canvas></div>
+        {% elif st.avg is not None or st.nps %}
+          <div class="avgbox">
+            {% if st.avg is not None %}<small>میانگین</small><b>{{ st.avg|fa_num }}</b><span class="muted small">از {{ st.max|fa_num }}</span>
+              <div class="bar mt-2"><i style="width:{% widthratio st.avg st.max 100 %}%"></i></div>{% endif %}
+            {% if st.nps %}
+            <div class="npsbox"><div class="npsbox__s"><small>شاخص NPS</small><b class="{% if st.nps.score >= 30 %}ok{% elif st.nps.score < 0 %}bad{% endif %}">{{ st.nps.score|fa_num }}</b></div>
+              <div class="nps">
+                <div class="nps--pro"><b>{{ st.nps.pro|fa_num }}٪</b>مروّج (۹–۱۰)</div>
+                <div class="nps--pas"><b>{{ st.nps.pas|fa_num }}٪</b>خنثی (۷–۸)</div>
+                <div class="nps--det"><b>{{ st.nps.det|fa_num }}٪</b>منتقد (۰–۶)</div>
+              </div>
+              <div class="npsbar"><i class="pro" style="width:{{ st.nps.pro }}%"></i><i class="pas" style="width:{{ st.nps.pas }}%"></i><i class="det" style="width:{{ st.nps.det }}%"></i></div>
+            </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      {% if st.others %}
+      <div class="px-3 pb-3"><h4 class="small fw-bold muted mb-2">پاسخ‌های «سایر»</h4><ul class="texts">{% for o in st.others %}<li>{{ o }}</li>{% endfor %}</ul></div>
+      {% endif %}
+
+    {% elif st.kind == "numbers" %}
+      <div class="qstat__b one">
+        <div class="nums">
+          <div><small>میانگین</small><b>{% if st.q.type == "price" %}{{ st.avg|toman }}{% else %}{{ st.avg|fa_num }}{% endif %}</b></div>
+          <div><small>میانه</small><b>{% if st.q.type == "price" %}{{ st.median|toman }}{% else %}{{ st.median|fa_num }}{% endif %}</b></div>
+          <div><small>کمینه</small><b>{% if st.q.type == "price" %}{{ st.min|toman }}{% else %}{{ st.min|fa_num }}{% endif %}</b></div>
+          <div><small>بیشینه</small><b>{% if st.q.type == "price" %}{{ st.max|toman }}{% else %}{{ st.max|fa_num }}{% endif %}</b></div>
+          <div><small>جمع</small><b>{% if st.q.type == "price" %}{{ st.total|toman }}{% else %}{{ st.total|fa_num }}{% endif %}</b></div>
+        </div>
+        <div class="small muted">{% if st.q.type == "price" %}مبالغ به تومان{% elif st.q.opt.unit %}واحد: {{ st.q.opt.unit }}{% endif %}</div>
+      </div>
+
+    {% elif st.kind == "matrix" %}
+      <div class="qstat__b one"><div class="table-responsive">
+        <table class="mt">
+          <thead><tr><th></th>{% for c in st.cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+          <tbody>{% for r in st.table %}<tr><td>{{ r.label }}</td>{% for c in r.cells %}<td><span class="heat" style="--h:{{ c.pct }}" title="{{ c.n|fa_num }} پاسخ">{{ c.pct|fa_num }}٪</span></td>{% endfor %}</tr>{% endfor %}</tbody>
+        </table></div></div>
+
+    {% elif st.kind == "ranking" %}
+      <div class="qstat__b one"><ol class="rank">
+        {% for r in st.rows %}<li><span class="rank__n">{{ forloop.counter|fa_num }}</span><span class="flex-grow-1">{{ r.label }}</span>
+          <span class="muted small">میانگین رتبه: <b>{% if r.avg %}{{ r.avg|fa_num }}{% else %}—{% endif %}</b></span></li>{% endfor %}
+      </ol></div>
+
+    {% elif st.kind == "files" %}
+      <div class="qstat__b one">
+        {% if st.files %}<div class="files">
+          {% for fl in st.files %}
+            {% if st.q.type == "signature" %}<a class="files__sig" href="{{ fl.url }}" target="_blank" rel="noopener"><img src="{{ fl.url }}" alt="امضا" loading="lazy"></a>
+            {% else %}<a class="files__f" href="{{ fl.url }}" target="_blank" rel="noopener">{% ic "doc" 16 %} <span class="text-truncate">{{ fl.name|default:"فایل" }}</span></a>{% endif %}
+          {% endfor %}</div>
+        <div class="small muted mt-2">آخرین {{ st.files|length|fa_num }} مورد؛ همه‌ی فایل‌ها را در جزئیات هر پاسخ ببینید.</div>
+        {% else %}<p class="muted small m-0">فایلی بارگذاری نشده.</p>{% endif %}
+      </div>
+
+    {% elif st.kind == "text" %}
+      <div class="qstat__b one">
+        {% if st.q.type == "consent" %}
+          <p class="m-0">{% ic "check" 16 %} <b>{{ st.answered|fa_num }}</b> نفر تأیید کرده‌اند.</p>
+        {% elif st.texts %}
+          <ul class="texts {% if st.q.type != "long_text" %}texts--grid{% endif %}">{% for t in st.texts %}<li>{% if st.q.type == "date" or st.q.type == "national_code" %}{{ t|fa_num }}{% else %}{{ t }}{% endif %}</li>{% endfor %}</ul>
+          {% if st.answered > 30 %}<a class="small mt-2 d-inline-block" style="color:var(--p)" href="{% url 'surveys:responses' s.pk %}">نمایش همه در فهرست پاسخ‌ها ←</a>{% endif %}
+        {% else %}<p class="muted small m-0">پاسخی ثبت نشده.</p>{% endif %}
+      </div>
+
+    {% else %}
+      <div class="qstat__b one"><p class="muted small m-0">پاسخی برای این سؤال ثبت نشده.</p></div>
+    {% endif %}
+  </section>
+  {% empty %}
+  <div class="c empty"><p class="m-0">این فرم سؤالی ندارد.</p></div>
+  {% endfor %}
+  {% endif %}
+
+  {% if m.can_edit %}
+  <form class="text-center mt-4" method="post" action="{% url 'surveys:clear_tests' s.pk %}">{% csrf_token %}
+    <button class="b b--sm b--g muted" type="submit" data-confirm="همه‌ی پاسخ‌های آزمایشی (ثبت‌شده در پیش‌نمایش) پاک شوند؟">{% ic "trash" 14 %} پاک‌کردن پاسخ‌های آزمایشی پیش‌نمایش</button>
+  </form>
+  {% endif %}
+</main>
+{{ timeline|json_script:"rs-timeline" }}
+{{ charts|json_script:"rs-charts" }}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/results.js' %}"></script>
+{% endblock %}

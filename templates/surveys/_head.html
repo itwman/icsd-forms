@@ -1,0 +1,14 @@
+{% load ui fa %}
+<div class="shead"><div class="shead__in">
+  <a class="b b--sm b--g" href="{% url 'surveys:dashboard' %}" title="بازگشت"><span class="flip d-inline-flex">{% ic "chevron" 18 %}</span></a>
+  <h1 title="{{ s.title }}">{{ s.title }}</h1>
+  <span class="pill pill--{{ s.status }}">{{ s.get_status_display }}</span>
+  <nav class="stabs">
+    {% if m.can_edit or user.is_superuser %}<a class="{% if tab == 'edit' %}on{% endif %}" href="{% url 'surveys:edit' s.pk %}">{% ic "edit" 16 %} طراحی</a>
+    <a class="{% if tab == 'settings' %}on{% endif %}" href="{% url 'surveys:settings' s.pk %}">{% ic "settings" 16 %} تنظیمات</a>{% endif %}
+    <a class="{% if tab == 'share' %}on{% endif %}" href="{% url 'surveys:share' s.pk %}">{% ic "send" 16 %} اشتراک‌گذاری</a>
+    <a class="{% if tab == 'results' %}on{% endif %}" href="{% url 'surveys:results' s.pk %}">{% ic "bars" 16 %} نتایج</a>
+    <a class="{% if tab == 'responses' %}on{% endif %}" href="{% url 'surveys:responses' s.pk %}">{% ic "inbox" 16 %} پاسخ‌ها <span class="pill">{{ s.response_count|fa_num }}</span></a>
+  </nav>
+  {% block head_actions %}<a class="b b--sm" href="{% url 'surveys:preview' s.code %}" target="_blank">{% ic "eye" 16 %} پیش‌نمایش</a>{% endblock %}
+</div></div>

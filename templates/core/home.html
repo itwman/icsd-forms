@@ -1,0 +1,143 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block content %}
+{% url 'accounts:login' as login_url %}
+<section class="hero">
+  <div class="wrap hero__g">
+    <div>
+      <span class="hero__kick">{% ic "sparkle" 15 %} فارسی، شمسی و بدون کدنویسی</span>
+      <h1>فرم و پرسشنامه‌ی حرفه‌ای، <em>در چند دقیقه</em></h1>
+      <p class="lead">نظرسنجی، آزمون، فرم ثبت‌نام و سفارش بسازید که مردم با لذت پرش کنند. منطق شرطی، امتیازدهی، تأیید پیامکی و گزارش لحظه‌ای — همه در یک ابزار ساده و کاملاً فارسی.</p>
+      <div class="hero__btns">
+        <a class="b b--p b--lg" href="{% if user.is_authenticated %}{% url 'surveys:new' %}{% else %}{{ login_url }}?next=/app/new/{% endif %}">{% ic "plus" 18 %} ساخت فرم رایگان</a>
+        <a class="b b--lg" href="{% url 'core:templates' %}">{% ic "layout" 18 %} دیدن قالب‌های آماده</a>
+      </div>
+      <ul class="hero__ok">
+        <li>{% ic "check" 15 %} بدون نیاز به کارت بانکی</li>
+        <li>{% ic "check" 15 %} ورود با شماره موبایل</li>
+        <li>{% ic "check" 15 %} سرور داخل ایران</li>
+      </ul>
+    </div>
+    <div class="hero__art" aria-hidden="true">
+      <div class="mock mock--back">
+        <div class="mock__mini"><b>نتایج زنده</b><span class="pill pill--p">امروز</span></div>
+        <div class="mock__cols"><i style="--h:46%"></i><i style="--h:72%"></i><i style="--h:58%"></i><i style="--h:90%"></i><i style="--h:66%"></i><i style="--h:80%"></i></div>
+      </div>
+      <div class="mock mock--front">
+        <div class="mock__n">۳ ←</div>
+        <div class="mock__q">از خرید امروزتان چقدر راضی بودید؟</div>
+        <div class="mock__opts">
+          <div class="mock__opt"><kbd>الف</kbd> خیلی راضی‌ام 😍</div>
+          <div class="mock__opt"><kbd>ب</kbd> راضی‌ام 🙂</div>
+          <div class="mock__opt"><kbd>ج</kbd> می‌تواند بهتر باشد</div>
+        </div>
+        <div class="mock__foot"><span class="b b--p b--sm">بعدی {% ic "chevron" 14 %}</span><span class="muted small">۳ از ۵</span></div>
+        <div class="mock__bar"><i></i></div>
+      </div>
+      <div class="mock__chip mock__chip--1"><span class="dot"></span> ۱۲۸ پاسخ امروز</div>
+      <div class="mock__chip mock__chip--2">{% ic "chart" 16 %} NPS <span class="ltr">+۴۲</span></div>
+      <div class="mock__chip mock__chip--3">{% ic "shield" 16 %} موبایل تأیید شد</div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="stats">
+      <div><b>{{ stats.forms|toman }}</b><span>فرم ساخته‌شده</span></div>
+      <div><b>{{ stats.responses|toman }}</b><span>پاسخ ثبت‌شده</span></div>
+      <div><b>۲۰+</b><span>نوع سؤال</span></div>
+      <div><b>۱۰۰٪</b><span>فارسی و شمسی</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">امکانات</span><h2>هر چیزی که برای یک فرم عالی لازم دارید</h2>
+      <p>از یک فرم تماس ساده تا پرسشنامه‌ی پژوهشی چندمرحله‌ای با امتیازدهی — بدون حتی یک خط کد.</p></div>
+    <div class="feats">
+      <div class="c feat"><div class="feat__i">{% ic "redirect" 22 %}</div><h3>منطق شرطی و پرش</h3><p>هر کس فقط سؤال‌هایی را می‌بیند که به او مربوط است؛ بر اساس پاسخ‌ها مسیر فرم را عوض کنید.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "target" 22 %}</div><h3>محاسبه و امتیازدهی</h3><p>آزمون با نمره، ارزیابی با امتیاز و فرم سفارش با جمع مبلغ؛ نتیجه را همان لحظه به پاسخ‌دهنده نشان دهید.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "list" 22 %}</div><h3>۲۰+ نوع سؤال</h3><p>چندگزینه‌ای، ماتریسی، رتبه‌بندی، NPS، ستاره، کد ملی، استان و شهر و ده‌ها نوع دیگر.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "clock" 22 %}</div><h3>تاریخ شمسی</h3><p>تقویم شمسی در سؤال‌ها، گزارش‌ها و خروجی‌ها؛ دیگر لازم نیست کسی تاریخ میلادی تبدیل کند.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "phone" 22 %}</div><h3>تأیید موبایل با پیامک</h3><p>پاسخ‌های واقعی جمع کنید: شماره‌ی پاسخ‌دهنده با کد یک‌بارمصرف تأیید می‌شود.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "upload" 22 %}</div><h3>آپلود فایل و امضا</h3><p>رزومه، تصویر مدارک یا امضای دیجیتال را مستقیم داخل فرم دریافت کنید.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "chart" 22 %}</div><h3>گزارش و نمودار زنده</h3><p>هر پاسخ همان لحظه در نمودارها می‌نشیند؛ فیلتر کنید، مقایسه کنید و تصمیم بگیرید.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "download" 22 %}</div><h3>خروجی اکسل</h3><p>همه‌ی پاسخ‌ها با تاریخ شمسی در یک فایل اکسل مرتب، آماده‌ی تحلیل در هر نرم‌افزاری.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "team" 22 %}</div><h3>کار تیمی</h3><p>همکاران را با شماره موبایل دعوت کنید و برای هر نفر نقش مدیر، ویرایشگر یا ناظر تعیین کنید.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "code" 22 %}</div><h3>جاسازی در سایت</h3><p>با یک خط کد، فرم را داخل سایت یا فروشگاه خودتان نمایش دهید؛ تمام‌صفحه، پنجره یا درون صفحه.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "grip" 22 %}</div><h3>QR کد</h3><p>برای نمایشگاه، فروشگاه یا کلاس درس QR بسازید تا با یک اسکن، فرم روی گوشی باز شود.</p></div>
+      <div class="c feat"><div class="feat__i">{% ic "bell" 22 %}</div><h3>وب‌هوک و اعلان پیامکی</h3><p>با هر پاسخ جدید پیامک بگیرید یا داده را خودکار به CRM و سامانه‌ی خودتان بفرستید.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec--alt">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">انواع سؤال</span><h2>برای هر نوع داده، سؤالِ مناسبش</h2>
+      <p>با کشیدن و رها کردن، هر سؤالی را که لازم دارید در چند ثانیه اضافه کنید.</p></div>
+    <div class="types">
+      <span>متن کوتاه</span><span>متن بلند</span><span>عدد</span><span>مبلغ (تومان)</span><span>ایمیل</span><span>موبایل</span><span>تلفن ثابت</span><span>کد ملی</span><span>آدرس وب‌سایت</span><span>تاریخ شمسی</span><span>چندگزینه‌ای</span><span>لیست کشویی</span><span>بله / خیر</span><span>امتیازدهی (ستاره)</span><span>طیف عددی / NPS</span><span>ماتریسی (جدولی)</span><span>رتبه‌بندی</span><span>استان و شهر</span><span>آپلود فایل</span><span>امضا</span><span>تأیید و رضایت</span><span>متن توضیحی</span>
+    </div>
+  </div>
+</section>
+
+{% if templates %}
+<section class="sec">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">قالب‌های آماده</span><h2>از صفر شروع نکنید</h2>
+      <p>قالب‌های حرفه‌ای که با دقت طراحی شده‌اند؛ انتخاب کنید، شخصی‌سازی کنید و منتشر کنید.</p></div>
+    <div class="tpls">
+      {% for t in templates %}
+      <div class="c tpl">
+        <div class="tpl__e">{{ t.emoji }}</div>
+        <h3>{{ t.title }}</h3>
+        <p>{{ t.description }}</p>
+        <div class="small muted">{% ic "list" 14 %} {{ t.question_count|fa_num }} سؤال · {{ t.get_category_display }}</div>
+        <div class="tpl__a"><a class="b b--sm" href="{% url 'surveys:template_preview' t.slug %}" target="_blank">{% ic "eye" 15 %} پیش‌نمایش</a></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4"><a class="b" href="{% url 'core:templates' %}">همه‌ی قالب‌ها {% ic "chevron" 16 %}</a></div>
+  </div>
+</section>
+{% endif %}
+
+<section class="sec sec--alt">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">چطور کار می‌کند؟</span><h2>سه قدم تا اولین پاسخ</h2></div>
+    <div class="steps">
+      <div class="c step"><span class="step__n">۱</span><div class="feat__i">{% ic "edit" 22 %}</div><h3>بسازید</h3><p>از یک قالب آماده شروع کنید یا سؤال‌ها را خودتان اضافه کنید. طراحی و رنگ را مطابق برندتان تنظیم کنید.</p></div>
+      <div class="c step"><span class="step__n">۲</span><div class="feat__i">{% ic "send" 22 %}</div><h3>منتشر کنید</h3><p>لینک را در پیام‌رسان‌ها بفرستید، QR چاپ کنید یا فرم را داخل سایتتان جاسازی کنید.</p></div>
+      <div class="c step"><span class="step__n">۳</span><div class="feat__i">{% ic "chart" 22 %}</div><h3>نتیجه بگیرید</h3><p>پاسخ‌ها را لحظه‌ای در نمودارها ببینید، فیلتر کنید و با یک کلیک خروجی اکسل بگیرید.</p></div>
+    </div>
+  </div>
+</section>
+
+{% if plans %}
+<section class="sec">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">تعرفه‌ها</span><h2>رایگان شروع کنید، هر وقت لازم شد ارتقا دهید</h2>
+      <p>بدون قرارداد و تعهد؛ پلن را هر زمان بخواهید تغییر دهید.</p></div>
+    <div class="plans">{% for p in plans %}{% include "core/_plan.html" with mode="teaser" %}{% endfor %}</div>
+    <div class="text-center mt-4"><a class="b" href="{% url 'core:pricing' %}">مقایسه‌ی کامل پلن‌ها {% ic "chevron" 16 %}</a></div>
+  </div>
+</section>
+{% endif %}
+
+{% if faqs %}
+<section class="sec sec--alt">
+  <div class="wrap wrap--narrow">
+    <div class="sec__h"><span class="kick">پرسش‌های پرتکرار</span><h2>سؤالی دارید؟</h2></div>
+    {% include "core/_faq.html" %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec">
+  <div class="wrap">
+    <div class="cta">
+      <h2>اولین فرم‌تان را همین حالا بسازید</h2>
+      <p>کمتر از پنج دقیقه وقت می‌گیرد. رایگان است و به کارت بانکی هم نیازی ندارد.</p>
+      <a class="b b--lg" href="{% if user.is_authenticated %}{% url 'surveys:new' %}{% else %}{{ login_url }}?next=/app/new/{% endif %}">{% ic "sparkle" 18 %} شروع رایگان</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

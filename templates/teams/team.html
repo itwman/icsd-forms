@@ -1,0 +1,127 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}تیم و فضای کاری — {{ site.site_name }}{% endblock %}
+{% block body %}
+{% with n=members|length %}
+<div class="app">
+  {% include "accounts/_aside.html" with active="team" %}
+  <main class="main">
+    <div class="ph">
+      <div>
+        <div class="small muted">فضای کاری فعلی</div>
+        <h1>{{ ws.name }}</h1>
+      </div>
+      <span class="pill pill--p">{% ic "user" 12 %} نقش شما: {{ m.get_role_display }}</span>
+    </div>
+
+    <div class="team-g">
+      <div class="team-main">
+        <section class="c">
+          <div class="c__h">{% ic "users" 18 %}<h2>اعضای تیم</h2><span class="pill ms-auto">{{ n|fa_num }} نفر</span></div>
+          <ul class="mem">
+            {% for mm in members %}
+            <li class="mem__r{% if mm.pending %} is-pending{% endif %}">
+              <span class="mem__av">{% if mm.user.avatar %}<img src="{{ mm.user.avatar.url }}" alt="">{% elif mm.pending %}{% ic "mail" 16 %}{% else %}{% if mm.user.first_name %}{{ mm.user.first_name|slice:":1" }}{% else %}{% ic "user" 18 %}{% endif %}{% endif %}</span>
+              <div class="mem__n">
+                <b>{% if mm.pending %}دعوت‌شده{% else %}{{ mm.user.display_name|fa_num }}{% endif %}{% if mm.user_id == user.id %} <span class="muted small">(شما)</span>{% endif %}</b>
+                <span class="small muted ltr">{% if mm.pending %}{{ mm.mobile|fa_num }}{% else %}{{ mm.user.mobile|fa_num }}{% endif %}</span>
+                {% if mm.pending %}<span class="pill pill--draft">{% ic "clock" 12 %} در انتظار ورود</span>{% endif %}
+              </div>
+              <div class="mem__a">
+                {% if m.can_manage and mm.role != 'owner' %}
+                <form method="post">{% csrf_token %}<input type="hidden" name="act" value="role"><input type="hidden" name="id" value="{{ mm.pk }}">
+                  <select name="role" class="form-select form-select-sm" aria-label="نقش" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()">
+                    {% for k, lbl in roles %}<option value="{{ k }}"{% if mm.role == k %} selected{% endif %}>{{ lbl }}</option>{% endfor %}
+                  </select>
+                </form>
+                {% else %}<span class="pill{% if mm.role == 'owner' %} pill--p{% endif %}">{% if mm.role == 'owner' %}{% ic "award" 12 %} {% endif %}{{ mm.get_role_display }}</span>{% endif %}
+                {% if mm.role != 'owner' %}{% if m.can_manage or mm.user_id == user.id %}
+                <form method="post">{% csrf_token %}<input type="hidden" name="act" value="remove"><input type="hidden" name="id" value="{{ mm.pk }}">
+                  {% if mm.user_id == user.id %}
+                  <button class="b b--sm b--d" data-confirm="از فضای کاری «{{ ws.name }}» خارج می‌شوید؟">{% ic "logout" 15 %} خروج</button>
+                  {% else %}
+                  <button class="b b--sm b--g mem__x" title="حذف" aria-label="حذف {{ mm.user.display_name|default:mm.mobile }}" data-confirm="{% if mm.pending %}دعوت این شماره لغو شود؟{% else %}«{{ mm.user.display_name|fa_num }}» از تیم حذف شود؟{% endif %}">{% ic "trash" 16 %}</button>
+                  {% endif %}
+                </form>
+                {% endif %}{% endif %}
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+          <div class="c__f team-limit">
+            {% if plan.max_members %}
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between small"><span>ظرفیت پلن «{{ plan.name }}»</span><b>{{ n|fa_num }} از {{ plan.max_members|fa_num }}</b></div>
+              <div class="bar"><i style="width:{% widthratio n plan.max_members 100 %}%"></i></div>
+            </div>
+            {% if n >= plan.max_members %}<a class="b b--sm b--p" href="{% url 'billing:billing' %}">{% ic "sparkle" 15 %} ارتقای پلن</a>{% endif %}
+            {% else %}<span class="small muted">{% ic "check" 14 %} پلن «{{ plan.name }}» محدودیت تعداد عضو ندارد.</span>{% endif %}
+          </div>
+        </section>
+
+        <section class="c mt-3">
+          <div class="c__h">{% ic "shield" 18 %}<h2>نقش‌ها چه دسترسی‌ای دارند؟</h2></div>
+          <div class="c__b roles">
+            <div><b>مالک</b><span>همه‌ی دسترسی‌ها، خرید اشتراک و مدیریت اعضا.</span></div>
+            <div><b>مدیر</b><span>ساخت و ویرایش همه‌ی فرم‌ها، دعوت و حذف اعضا.</span></div>
+            <div><b>ویرایشگر</b><span>ساخت، ویرایش و انتشار فرم و دیدن نتایج.</span></div>
+            <div><b>فقط مشاهده‌ی نتایج</b><span>دیدن پاسخ‌ها و گزارش‌ها، بدون امکان ویرایش.</span></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="team-side">
+        {% if m.can_manage %}
+        <section class="c">
+          <div class="c__h">{% ic "send" 18 %}<h2>دعوت همکار</h2></div>
+          <form method="post" class="c__b" novalidate>{% csrf_token %}<input type="hidden" name="act" value="invite">
+            {% if plan.max_members and n >= plan.max_members %}
+            <div class="alert alert-warning small py-2">{% ic "alert" 15 %} ظرفیت اعضای پلن «{{ plan.name }}» پر است. برای دعوت همکار بیشتر <a href="{% url 'billing:billing' %}" class="fw-bold">پلن را ارتقا دهید</a>.</div>
+            {% endif %}
+            <label class="form-label" for="invMobile">شماره موبایل همکار</label>
+            <input id="invMobile" name="mobile" class="form-control" inputmode="numeric" dir="ltr" maxlength="11" placeholder="۰۹۱۲۳۴۵۶۷۸۹" autocomplete="off" required>
+            <label class="form-label mt-3" for="invRole">نقش</label>
+            <select id="invRole" name="role" class="form-select">
+              {% for k, lbl in roles %}<option value="{{ k }}"{% if k == 'editor' %} selected{% endif %}>{{ lbl }}</option>{% endfor %}
+            </select>
+            <button class="b b--p w-100 mt-3"{% if plan.max_members and n >= plan.max_members %} disabled{% endif %}>{% ic "plus" 16 %} ارسال دعوت</button>
+            <p class="help mt-2 mb-0">پیامک دعوت ارسال می‌شود؛ همکارتان با ورود به سامانه با همین شماره، خودکار به تیم اضافه می‌شود.</p>
+          </form>
+        </section>
+
+        <section class="c mt-3">
+          <div class="c__h">{% ic "edit" 18 %}<h2>نام فضای کاری</h2></div>
+          <form method="post" class="c__b">{% csrf_token %}<input type="hidden" name="act" value="rename">
+            <div class="d-flex gap-2">
+              <input name="name" class="form-control" value="{{ ws.name }}" maxlength="120" required aria-label="نام فضای کاری">
+              <button class="b">ذخیره</button>
+            </div>
+          </form>
+        </section>
+        {% endif %}
+
+        <section class="c{% if m.can_manage %} mt-3{% endif %}">
+          <div class="c__h">{% ic "folder" 18 %}<h2>فضاهای کاری شما</h2></div>
+          <ul class="wsl">
+            {% for x in all %}
+            <li>
+              <span class="wsl__i">{{ x.workspace.name|slice:":1" }}</span>
+              <div class="wsl__n"><b>{{ x.workspace.name }}</b><span class="small muted">{{ x.get_role_display }}</span></div>
+              {% if x.workspace_id == ws.pk %}<span class="pill pill--published">{% ic "check" 12 %} فعلی</span>
+              {% else %}
+              <form method="post" action="{% url 'teams:switch' x.workspace_id %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'teams:team' %}">
+                <button class="b b--sm">ورود {% ic "chevron" 14 %}</button></form>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          <form method="post" class="c__f">{% csrf_token %}<input type="hidden" name="act" value="new">
+            <input name="name" class="form-control form-control-sm" placeholder="نام فضای کاری جدید" maxlength="120" aria-label="نام فضای کاری جدید">
+            <button class="b b--sm b--p">{% ic "plus" 15 %} ساخت</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block title %}قالب‌های آماده‌ی فرم و پرسشنامه — {{ site.site_name }}{% endblock %}
+{% block desc %}قالب‌های آماده‌ی نظرسنجی، آزمون، فرم ثبت‌نام، استخدام و رضایت مشتری؛ با یک کلیک شروع کنید و شخصی‌سازی کنید.{% endblock %}
+{% block content %}
+<section class="sec">
+  <div class="wrap">
+    <div class="sec__h"><span class="kick">قالب‌های آماده</span>
+      <h1 class="h2like">با یک قالب حرفه‌ای، چند قدم جلوتر باشید</h1>
+      <p>هر قالب با سؤال‌های سنجیده و ترتیب درست طراحی شده است. پیش‌نمایش بگیرید، انتخاب کنید و در ویرایشگر هر چیزی را که خواستید تغییر دهید.</p>
+    </div>
+    <nav class="tags tags--c" aria-label="دسته‌ها">
+      <a href="{% url 'core:templates' %}" class="{% if not cat %}on{% endif %}">همه</a>
+      {% for k, lbl in cats %}<a href="?cat={{ k }}" class="{% if cat == k %}on{% endif %}">{{ lbl }}</a>{% endfor %}
+    </nav>
+    {% if templates %}
+    <div class="tpls">
+      {% for t in templates %}
+      <div class="c tpl">
+        <div class="d-flex align-items-start justify-content-between gap-2"><div class="tpl__e">{{ t.emoji }}</div>{% if t.is_featured %}<span class="pill pill--p">{% ic "star" 12 %} ویژه</span>{% endif %}</div>
+        <h3>{{ t.title }}</h3>
+        <p>{{ t.description }}</p>
+        <div class="tpl__m"><span>{% ic "list" 14 %} {{ t.question_count|fa_num }} سؤال</span><span>{% ic "tag" 14 %} {{ t.get_category_display }}</span>{% if t.uses %}<span>{% ic "users" 14 %} {{ t.uses|toman }} استفاده</span>{% endif %}</div>
+        <div class="tpl__a">
+          <a class="b b--sm" href="{% url 'surveys:template_preview' t.slug %}" target="_blank" rel="noopener">{% ic "eye" 15 %} پیش‌نمایش</a>
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'surveys:new' %}">{% csrf_token %}<input type="hidden" name="template" value="{{ t.slug }}"><button class="b b--sm b--p">{% ic "plus" 15 %} استفاده</button></form>
+          {% else %}
+          <a class="b b--sm b--p" href="{% url 'accounts:login' %}?next={% url 'surveys:new' %}%3Fcat%3D{{ t.category }}">{% ic "plus" 15 %} استفاده</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="c empty">{% ic "layout" 40 %}<p class="mt-2">در این دسته هنوز قالبی نداریم.</p><a class="b" href="{% url 'core:templates' %}">دیدن همه‌ی قالب‌ها</a></div>
+    {% endif %}
+    <div class="c tpl-blank mt-4">
+      <div><h3>قالب مناسب را پیدا نکردید؟</h3><p class="muted mb-0">یک فرم خالی بسازید؛ افزودن سؤال با ویرایشگر کشیدن‌ورها کردن فقط چند ثانیه طول می‌کشد.</p></div>
+      <a class="b b--p" href="{% if user.is_authenticated %}{% url 'surveys:new' %}{% else %}{% url 'accounts:login' %}?next=/app/new/{% endif %}">{% ic "plus" 16 %} فرم خالی</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

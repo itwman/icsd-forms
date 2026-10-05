@@ -1,0 +1,8 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}جستجو{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "search" 24 %} جستجو: «{{ q }}»</h1></div>
+{% for g in results %}<div class="c mb-3"><div class="c__h"><h3>{% pi g.r.icon %} {{ g.r.title }}</h3><a class="more" href="{{ g.r.list_url }}?q={{ q|urlencode }}">همه‌ی نتایج ←</a></div>
+  <ul class="lst">{% for o, u in g.items %}<li><a href="{{ u }}">{{ o }}</a></li>{% endfor %}</ul></div>
+{% empty %}<div class="c empty">{% pi "search" 46 %}<div>{% if q|length < 2 %}دست‌کم دو حرف بنویسید.{% else %}نتیجه‌ای پیدا نشد.{% endif %}</div></div>{% endfor %}
+{% endblock %}

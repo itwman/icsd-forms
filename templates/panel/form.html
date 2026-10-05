@@ -1,0 +1,81 @@
+{% extends "panel/base.html" %}{% load static panel %}
+{% block title %}{% if is_new %}افزودن {{ r.title_single }}{% else %}{{ obj }}{% endif %}{% endblock %}
+{% block head %}{{ media.css }}{% endblock %}
+{% block content %}
+<div class="crumb"><a href="{% url 'panel:dashboard' %}">داشبورد</a> / {% if not r.singleton %}<a href="{{ r.list_url }}">{{ r.title }}</a> / {% endif %}{% if is_new %}افزودن{% else %}ویرایش{% endif %}</div>
+<div class="ph">
+  <h1>{% pi r.icon 24 %} {% if r.singleton %}{{ r.title }}{% elif is_new %}افزودن {{ r.title_single }}{% else %}{{ obj|truncatechars:70 }}{% endif %}</h1>
+  <div class="ph__act">
+    {% if site_url %}<a class="b" href="{{ site_url }}" target="_blank">{% pi "eye" 16 %} مشاهده در سایت</a>{% endif %}
+    {% if not r.singleton %}<a class="b" href="{{ r.list_url }}">{% pi "list" 16 %} فهرست</a>{% endif %}
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="mainform" novalidate data-prepopulate='{{ prepopulate }}' data-new="{{ is_new|yesno:'1,0' }}">{% csrf_token %}
+{% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+<div class="fw {% if r.singleton %}fw--full{% endif %}">
+  <div>
+    {% if tabs %}
+    <div class="c fs">
+      <div class="tabs" role="tablist">{% for s in sections %}<button type="button" class="{% if forloop.first %}on{% endif %}" data-tab="t{{ forloop.counter }}">{{ s.title }}</button>{% endfor %}</div>
+      {% for s in sections %}<div class="tabpane {% if forloop.first %}on{% endif %}" id="t{{ forloop.counter }}"><div class="c__b" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px">
+        {% for f in s.fields %}{% include "panel/partials/field.html" %}{% endfor %}</div></div>{% endfor %}
+    </div>
+    {% else %}
+    {% for s in sections %}
+    <div class="c fs"><div class="c__h"><h2>{{ s.title }}</h2></div>
+      <div class="c__b">{% for f in s.fields %}{% include "panel/partials/field.html" %}{% endfor %}</div></div>
+    {% endfor %}
+    {% endif %}
+
+    {% if seo_fields %}
+    <div class="c fs"><div class="c__h"><h2>{% pi "target" %} سئو و نمایش در گوگل</h2></div>
+      <div class="c__b" style="display:block">
+        <div id="seo-panel" class="seo-panel" data-site="{{ site.site_name }}" data-url="{{ site.site_url }}" data-body="{{ r.seo.body }}" data-title="{{ r.seo.title }}" data-prefix="{{ r.seo.prefix }}"></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px;margin-top:16px">{% for f in seo_fields %}{% include "panel/partials/field.html" %}{% endfor %}</div>
+      </div></div>
+    {% endif %}
+
+    {% for inl, fs in formsets %}{% include "panel/partials/inline.html" %}{% endfor %}
+
+    {% for ch in children %}
+    <div class="c fs"><div class="c__h"><h3>{% pi ch.r.icon %} {{ ch.title }} <small class="muted">({{ ch.count|pfa }})</small></h3>
+      {% if ch.add %}<a class="b b--sm ms-auto" href="{{ ch.add }}">{% pi "plus" 14 %} افزودن</a>{% endif %}</div>
+      <ul class="lst">{% for o, u in ch.items %}<li><a href="{{ u }}">{{ o }}</a></li>{% empty %}<li class="muted">موردی نیست.</li>{% endfor %}</ul>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if not r.singleton %}
+  <aside class="sticky-side">
+    <div class="c save-box"><div class="c__h"><h3>{% pi "check" %} ذخیره</h3></div>
+      <div class="c__b">
+        {% if can_change %}
+        <button class="b b--p" type="submit" name="_next" value="">{% pi "check" 16 %} ذخیره</button>
+        {% if not r.singleton %}<button class="b" type="submit" name="_next" value="list">ذخیره و بازگشت به فهرست</button>
+        <button class="b" type="submit" name="_next" value="add">ذخیره و افزودن مورد بعدی</button>{% endif %}
+        {% else %}<div class="muted small">{% pi "lock" 15 %} شما فقط اجازه‌ی مشاهده دارید.</div>{% endif %}
+        {% if can_duplicate %}<button class="b" type="submit" form="dupform">{% pi "copy" 16 %} ساخت کپی</button>{% endif %}
+        {% if can_delete %}<a class="b b--d" href="{% url 'panel:delete' r.key obj.pk %}">{% pi "trash" 16 %} حذف</a>{% endif %}
+        {% if r.key == "accounts-user" %}
+        <div class="fld mt-2"><label for="new_password">{% if is_new %}رمز عبور (اختیاری){% else %}رمز عبور جدید{% endif %}</label>
+          <input type="password" class="form-control" name="new_password" id="new_password" autocomplete="new-password" dir="ltr">
+          <div class="help">خالی بگذارید تا تغییر نکند. کاربر می‌تواند با کد پیامکی هم وارد شود.</div></div>
+        {% endif %}
+        {% if not is_new %}<div class="meta">
+          {% if obj.created_at %}<span>ایجاد: {{ obj.created_at|pdate }}</span>{% endif %}
+          {% if obj.updated_at %}<span>آخرین ویرایش: {{ obj.updated_at|pdate }}</span>{% endif %}
+          <span>شناسه: {{ obj.pk|pfa }}</span></div>{% endif %}
+      </div></div>
+    {% if history %}<div class="c"><div class="c__h"><h3>{% pi "history" %} تاریخچه</h3></div>
+      <ul class="lst hist">{% for e in history %}<li><span>{{ e.user.get_full_name|default:e.user }}<br><small class="muted">{{ e.change_message|default:e.get_action_flag_display|truncatechars:60 }}</small></span><span class="end">{{ e.action_time|pdate }}</span></li>{% endfor %}</ul></div>{% endif %}
+  </aside>
+  {% else %}
+  {% if can_change %}<div style="position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,var(--bg) 40%);z-index:5"><button class="b b--p" type="submit">{% pi "check" 16 %} ذخیره‌ی تنظیمات</button></div>{% endif %}
+  {% endif %}
+</div>
+</form>
+{% if can_duplicate %}<form id="dupform" method="post" action="{% url 'panel:duplicate' r.key obj.pk %}">{% csrf_token %}</form>{% endif %}
+{% endblock %}
+{% block scripts %}{{ media.js }}{% if seo_fields %}<script src="{% static 'js/seo-panel.js' %}"></script>{% endif %}{% endblock %}

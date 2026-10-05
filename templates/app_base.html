@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load ui fa %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block nav %}
+<header class="nav"><div class="nav__in" style="padding-inline:20px">
+  <button class="b b--sm b--g d-lg-none" type="button" onclick="document.querySelector('.aside')?.classList.toggle('open')" aria-label="منو">{% ic "menu" %}</button>
+  <a class="brand" href="{% url 'surveys:dashboard' %}">{% if site.logo %}<img src="{{ site.logo.url }}" alt="">{% else %}<span class="brand__dot">{% ic "doc" 18 %}</span>{% endif %}<span class="d-none d-sm-inline">{{ site.short_name }}</span></a>
+  {% block crumbs %}{% endblock %}
+  <span class="nav__sp"></span>
+  {% if user.is_staff %}<a class="b b--sm b--g d-none d-md-inline-flex" href="{% url 'panel:dashboard' %}">{% ic "shield" 16 %} مدیریت سامانه</a>{% endif %}
+  <div class="dropdown">
+    <button class="b b--sm" data-bs-toggle="dropdown" type="button">{% ic "user" 16 %} <span class="d-none d-sm-inline">{{ user.display_name }}</span></button>
+    <ul class="dropdown-menu dropdown-menu-start">
+      <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">پروفایل و رمز</a></li>
+      <li><a class="dropdown-item" href="{% url 'teams:team' %}">تیم و فضای کاری</a></li>
+      <li><a class="dropdown-item" href="{% url 'billing:billing' %}">اشتراک و پرداخت</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">خروج</a></li>
+    </ul>
+  </div>
+</div></header>
+{% endblock %}
+{% block footer %}{% endblock %}

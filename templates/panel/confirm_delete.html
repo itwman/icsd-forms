@@ -1,0 +1,16 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}حذف{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "trash" 24 %} حذف {{ count|pfa }} {{ r.title_single }}</h1></div>
+<div class="c" style="max-width:760px"><div class="c__b">
+  <p>آیا مطمئن هستید؟ این کار <b>بازگشت‌پذیر نیست</b>.</p>
+  <ul>{% for o in objects %}<li>{{ o }}</li>{% endfor %}</ul>
+  {% if related %}<div class="alert alert-warning">همراه با این‌ها، داده‌های وابسته هم حذف می‌شوند:
+    <ul class="mb-0">{% for name, n in related %}<li>{{ n|pfa }} {{ name }}</li>{% endfor %}</ul></div>{% endif %}
+  <form method="post" class="d-flex gap-2" {% if bulk %}action="{{ r.list_url }}"{% endif %}>{% csrf_token %}
+    {% if bulk %}{% for i in ids %}<input type="hidden" name="ids" value="{{ i }}">{% endfor %}<input type="hidden" name="action" value="delete_confirmed">{% endif %}
+    <button class="b b--d" type="submit">{% pi "trash" 16 %} بله، حذف شود</button>
+    <a class="b" href="{% if bulk %}{{ r.list_url }}{% else %}{{ r.list_url }}{% endif %}">انصراف</a>
+  </form>
+</div></div>
+{% endblock %}

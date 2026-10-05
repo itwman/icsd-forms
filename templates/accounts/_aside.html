@@ -1,0 +1,11 @@
+{% load ui %}{# منوی کناری صفحات حساب، تیم و اشتراک — active: profile | team | billing #}
+<aside class="aside">
+  <a class="ai" href="{% url 'surveys:dashboard' %}">{% ic "dashboard" 18 %} فرم‌های من</a>
+  <a class="ai" href="{% url 'surveys:new' %}">{% ic "plus" 18 %} فرم جدید</a>
+  <a class="ai" href="{% url 'core:templates' %}">{% ic "layout" 18 %} قالب‌های آماده</a>
+  <h6>حساب کاربری</h6>
+  <a class="ai{% if active == 'profile' %} on{% endif %}" href="{% url 'accounts:profile' %}">{% ic "user" 18 %} پروفایل و رمز</a>
+  <a class="ai{% if active == 'team' %} on{% endif %}" href="{% url 'teams:team' %}">{% ic "team" 18 %} تیم و فضای کاری</a>
+  <a class="ai{% if active == 'billing' %} on{% endif %}" href="{% url 'billing:billing' %}">{% ic "award" 18 %} اشتراک و پرداخت</a>
+  <a class="ai" href="{% url 'accounts:logout' %}">{% ic "logout" 18 %} خروج</a>
+</aside>

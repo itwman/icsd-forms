@@ -1,0 +1,88 @@
+{% extends "app_base.html" %}{% load static ui %}
+{% block title %}طراحی «{{ s.title }}» — {{ site.short_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/builder.css' %}">{% endblock %}
+{% block body_class %}is-builder{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" with tab="edit" %}
+<main class="bd" id="builder" data-boot="{{ boot }}" data-brand="{{ site.short_name }}" data-mtab="canvas">
+  {% csrf_token %}
+  <!-- ابزار بالا (به سربرگ فرم منتقل می‌شود) -->
+  <div class="bd-act" id="bAct">
+    <span class="bd-save" id="bSave" data-state="saved" role="status" aria-live="polite"><i></i><span>ذخیره شد</span></span>
+    <span class="bd-act__g">
+      <button class="b b--sm b--g bd-ib" type="button" id="bUndo" title="واگرد (Ctrl+Z)" aria-label="واگرد" disabled><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7H9a5 5 0 0 0 0 10h6"/><path d="m12 3-4 4 4 4" transform="translate(-3 0)"/></svg></button>
+      <button class="b b--sm b--g bd-ib" type="button" id="bRedo" title="ازنو (Ctrl+Shift+Z)" aria-label="ازنو" disabled><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7h6a5 5 0 0 1 0 10H9"/><path d="m12 3 4 4-4 4" transform="translate(3 0)"/></svg></button>
+    </span>
+    <button class="b b--sm" type="button" id="bPreview" title="پیش‌نمایش در زبانه‌ی جدید">{% ic "eye" 16 %}<span class="bd-hide-sm">پیش‌نمایش</span></button>
+    <span class="bd-pub">
+      <span class="pill bd-unpub" id="bUnpub" hidden>تغییرات منتشرنشده</span>
+      <button class="b b--sm b--p" type="button" id="bPublish">{% ic "send" 16 %}<span>انتشار</span></button>
+    </span>
+  </div>
+
+  <!-- ستون ۱: انواع سؤال -->
+  <section class="bd-pane bd-pal" id="bPal" aria-label="انواع سؤال">
+    <div class="bd-pane__h"><h2>{% ic "plus" 16 %} افزودن سؤال</h2></div>
+    <div class="bd-pane__b" id="bPalList"></div>
+  </section>
+
+  <!-- ستون ۲: ساختار فرم -->
+  <section class="bd-pane bd-out" id="bOut" aria-label="ساختار فرم">
+    <div class="bd-pane__h"><h2>{% ic "list" 16 %} ساختار فرم</h2><span class="pill" id="bCount"></span></div>
+    <div class="bd-pane__b" id="bOutList"></div>
+  </section>
+
+  <!-- ستون ۳: پیش‌نمایش -->
+  <section class="bd-canvas" id="bCanvasWrap" aria-label="پیش‌نمایش">
+    <div class="bd-cv-bar">
+      <span class="bd-cv-crumb" id="bCrumb"></span>
+      <span class="bd-cv-tools">
+        <button class="b b--sm b--g bd-ib" type="button" id="bPrev" title="قبلی">{% ic "chevron" 16 %}</button>
+        <button class="b b--sm b--g bd-ib bd-flip" type="button" id="bNext" title="بعدی">{% ic "chevron" 16 %}</button>
+        <span class="bd-seg" role="group" aria-label="اندازه‌ی نمایش">
+          <button type="button" data-dev="desk" class="on" title="رایانه">{% ic "monitor" 16 %}</button>
+          <button type="button" data-dev="mob" title="موبایل">{% ic "phone" 16 %}</button>
+        </span>
+      </span>
+    </div>
+    <div class="bd-cv-scroll"><div class="bd-frame" id="bFrame"><div class="cv" id="bCanvas"></div></div></div>
+  </section>
+
+  <!-- ستون ۴: ویرایشگر -->
+  <section class="bd-pane bd-ins" id="bIns" aria-label="ویرایش"></section>
+
+  <!-- زبانه‌های موبایل -->
+  <nav class="bd-mtabs" aria-label="بخش‌های فرم‌ساز">
+    <button type="button" data-mt="pal">{% ic "plus" 18 %}<span>افزودن</span></button>
+    <button type="button" data-mt="out">{% ic "list" 18 %}<span>ساختار</span></button>
+    <button type="button" data-mt="canvas" class="on">{% ic "eye" 18 %}<span>نمایش</span></button>
+    <button type="button" data-mt="ins">{% ic "edit" 18 %}<span>ویرایش</span></button>
+  </nav>
+
+  <input type="file" id="bFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+  <div class="bd-pop" id="bPop" hidden></div>
+  <dialog class="bd-dlg" id="bDlg"><form method="dialog">
+    <h3 id="bDlgT"></h3><div id="bDlgB"></div>
+    <div class="bd-dlg__a"><button class="b" value="cancel" id="bDlgNo">انصراف</button><button class="b b--p" value="ok" id="bDlgOk">تأیید</button></div>
+  </form></dialog>
+
+  <!-- آیکن‌ها برای اسکریپت -->
+  <div id="bIcons" hidden>
+    <i data-i="menu">{% ic "menu" %}</i><i data-i="article">{% ic "article" %}</i><i data-i="chart">{% ic "chart" %}</i><i data-i="cart">{% ic "cart" %}</i>
+    <i data-i="mail">{% ic "mail" %}</i><i data-i="phone">{% ic "phone" %}</i><i data-i="shield">{% ic "shield" %}</i><i data-i="link">{% ic "link" %}</i>
+    <i data-i="clock">{% ic "clock" %}</i><i data-i="list">{% ic "list" %}</i><i data-i="chevron-down">{% ic "chevron-down" %}</i><i data-i="check">{% ic "check" %}</i>
+    <i data-i="star">{% ic "star" %}</i><i data-i="bars">{% ic "bars" %}</i><i data-i="layout">{% ic "layout" %}</i><i data-i="award">{% ic "award" %}</i>
+    <i data-i="map">{% ic "map" %}</i><i data-i="upload">{% ic "upload" %}</i><i data-i="edit">{% ic "edit" %}</i><i data-i="handshake">{% ic "handshake" %}</i>
+    <i data-i="doc">{% ic "doc" %}</i><i data-i="grip">{% ic "grip" %}</i><i data-i="copy">{% ic "copy" %}</i><i data-i="trash">{% ic "trash" %}</i>
+    <i data-i="plus">{% ic "plus" %}</i><i data-i="x">{% ic "x" %}</i><i data-i="image">{% ic "image" %}</i><i data-i="filter">{% ic "filter" %}</i>
+    <i data-i="redirect">{% ic "redirect" %}</i><i data-i="home">{% ic "home" %}</i><i data-i="flag">{% ic "target" %}</i><i data-i="database">{% ic "database" %}</i>
+    <i data-i="palette">{% ic "palette" %}</i><i data-i="settings">{% ic "settings" %}</i><i data-i="lock">{% ic "lock" %}</i><i data-i="alert">{% ic "alert" %}</i>
+    <i data-i="code">{% ic "code" %}</i><i data-i="chevron">{% ic "chevron" %}</i><i data-i="sparkle">{% ic "sparkle" %}</i><i data-i="eye">{% ic "eye" %}</i>
+    <i data-i="external">{% ic "external" %}</i><i data-i="user">{% ic "user" %}</i><i data-i="tag">{% ic "tag" %}</i><i data-i="dots">{% ic "dots" %}</i>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/sortable/Sortable.min.js' %}"></script>
+<script src="{% static 'js/builder.js' %}"></script>
+{% endblock %}

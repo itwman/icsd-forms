@@ -1,0 +1,29 @@
+{% load panel %}
+<div class="c fs inl-box" data-inline="{{ fs.prefix }}">
+  <div class="c__h"><h3>{% pi "list" %} {{ inl.title }}</h3><span class="muted small">{{ fs.forms|length|pfa }} مورد</span>
+    <button type="button" class="b b--sm ms-auto" data-add-row>{% pi "plus" 14 %} افزودن</button></div>
+  {{ fs.management_form }}
+  {% for e in fs.non_form_errors %}<div class="alert alert-danger m-3">{{ e }}</div>{% endfor %}
+  {% if inl.stacked %}
+  <div class="c__b inl-stack" data-rows>
+    {% for form in fs.forms %}<div class="inl-item" data-row>
+      {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+      {% for f in form.visible_fields %}{% if f.name != "DELETE" %}{% include "panel/partials/field.html" %}{% endif %}{% endfor %}
+      {% if form.instance.pk %}<label class="fld fld--wide text-danger small"><input type="checkbox" name="{{ form.DELETE.html_name }}" class="form-check-input"> حذف این مورد</label>{% endif %}
+      {% for e in form.non_field_errors %}<div class="err fld--wide">{{ e }}</div>{% endfor %}
+    </div>{% endfor %}
+  </div>
+  <template data-empty><div class="inl-item" data-row>{% for h in fs.empty_form.hidden_fields %}{{ h }}{% endfor %}{% for f in fs.empty_form.visible_fields %}{% if f.name != "DELETE" %}{% include "panel/partials/field.html" %}{% endif %}{% endfor %}</div></template>
+  {% else %}
+  <div class="tw inl"><table class="t">
+    <thead><tr>{% for f in fs.empty_form.visible_fields %}{% if f.name != "DELETE" %}<th>{{ f.label }}</th>{% endif %}{% endfor %}<th class="del">حذف</th></tr></thead>
+    <tbody data-rows>
+      {% for form in fs.forms %}<tr data-row>
+        {% for f in form.visible_fields %}{% if f.name != "DELETE" %}<td {% if f.errors %}class="has-err"{% endif %}>{% if forloop.first %}{% for h in form.hidden_fields %}{{ h }}{% endfor %}{% endif %}{{ f }}{% for e in f.errors %}<div class="err small text-danger">{{ e }}</div>{% endfor %}</td>{% endif %}{% endfor %}
+        <td class="del">{% if form.instance.pk %}<input type="checkbox" name="{{ form.DELETE.html_name }}" class="form-check-input" aria-label="حذف">{% endif %}</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <template data-empty><tr data-row>{% for f in fs.empty_form.visible_fields %}{% if f.name != "DELETE" %}<td>{% if forloop.first %}{% for h in fs.empty_form.hidden_fields %}{{ h }}{% endfor %}{% endif %}{{ f }}</td>{% endif %}{% endfor %}<td class="del"></td></tr></template>
+  {% endif %}
+</div>

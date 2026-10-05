@@ -1,0 +1,104 @@
+{% extends "app_base.html" %}{% load ui fa %}
+{% block title %}تنظیمات «{{ s.title }}» — {{ site.short_name }}{% endblock %}
+{% block body %}
+{% include "surveys/_head.html" %}
+<main class="main wrap wrap--narrow">
+  <div class="ph"><div><h1>تنظیمات پاسخ‌گیری</h1><div class="small muted">زمان‌بندی، محدودیت‌ها، دسترسی و اعلان‌های این فرم.</div></div></div>
+
+  {% if s.status == "closed" %}<div class="note note--bad mb-3">{% ic "lock" 18 %}<div>پاسخ‌گیری این فرم <b>بسته</b> است؛ تنظیمات زیر بعد از بازکردن فرم اعمال می‌شوند.</div></div>
+  {% elif s.status == "draft" %}<div class="note note--warn mb-3">{% ic "alert" 18 %}<div>این فرم هنوز <b>منتشر نشده</b>؛ تا وقتی از صفحه‌ی طراحی منتشرش نکنید، پاسخی نمی‌گیرد.</div><a class="b b--sm ms-auto" href="{% url 'surveys:edit' s.pk %}">رفتن به طراحی</a></div>{% endif %}
+
+  <form method="post" novalidate>{% csrf_token %}
+    <section class="c mb-3">
+      <div class="c__h">{% ic "clock" 18 %}<h2>زمان‌بندی و ظرفیت</h2></div>
+      <div class="c__b setg">
+        <div><label class="lbl" for="starts_at">شروع پاسخ‌گیری</label>
+          <input class="form-control" id="starts_at" name="starts_at" data-jdp dir="ltr" autocomplete="off" placeholder="۱۴۰۵/۰۷/۱۳ ۰۸:۰۰" value="{{ s.starts_at|jdt }}">
+          <div class="help">خالی = از همین حالا. قبل از این زمان فرم پیام «هنوز شروع نشده» نشان می‌دهد.</div></div>
+        <div><label class="lbl" for="ends_at">پایان پاسخ‌گیری</label>
+          <input class="form-control" id="ends_at" name="ends_at" data-jdp dir="ltr" autocomplete="off" placeholder="۱۴۰۵/۰۸/۳۰ ۲۳:۵۹" value="{{ s.ends_at|jdt }}">
+          <div class="help">خالی = بدون تاریخ پایان.</div></div>
+        <div><label class="lbl" for="max_responses">حداکثر تعداد پاسخ</label>
+          <input class="form-control" id="max_responses" name="max_responses" inputmode="numeric" dir="ltr" value="{{ s.max_responses|default:'' }}" placeholder="نامحدود">
+          <div class="help">بعد از رسیدن به این تعداد، فرم خودکار بسته می‌شود. خالی یا ۰ = نامحدود.</div></div>
+        <div><label class="lbl" for="closed_message">پیام فرم بسته</label>
+          <input class="form-control" id="closed_message" name="closed_message" maxlength="250" value="{{ s.closed_message }}" placeholder="این فرم دیگر پاسخ نمی‌پذیرد.">
+          <div class="help">وقتی زمان تمام شود یا ظرفیت پر شود به پاسخ‌دهنده نمایش داده می‌شود.</div></div>
+      </div>
+    </section>
+
+    <section class="c mb-3">
+      <div class="c__h">{% ic "shield" 18 %}<h2>دسترسی و محدودیت</h2></div>
+      <div class="c__b">
+        <div class="mb-3 {% if not plan.password %}gated{% endif %}">
+          <label class="lbl" for="password">رمز ورود به فرم {% if not plan.password %}<span class="lock">{% ic "lock" 11 %} پلن بالاتر</span>{% endif %}</label>
+          <div class="d-flex gap-2 flex-wrap">
+            <input class="form-control" style="max-width:320px" id="password" name="password" maxlength="50" dir="ltr" autocomplete="off" value="{{ s.password }}" placeholder="بدون رمز" {% if not plan.password %}disabled{% endif %}>
+            {% if not plan.password %}<a class="b b--sm" href="{% url 'billing:billing' %}">{% ic "sparkle" 14 %} ارتقای پلن</a>{% endif %}
+          </div>
+          <div class="help">فقط کسانی که رمز را بدانند می‌توانند فرم را پر کنند. خالی = فرم عمومی.</div>
+        </div>
+        <div class="setg">
+          <label class="sw form-switch"><input class="form-check-input" type="checkbox" role="switch" name="one_per_device" {% if s.one_per_device %}checked{% endif %}>
+            <span><b>هر دستگاه فقط یک بار</b><small>جلوی پاسخ تکراری از یک مرورگر را می‌گیرد.</small></span></label>
+          <label class="sw form-switch"><input class="form-check-input" type="checkbox" role="switch" name="save_partial" {% if s.save_partial %}checked{% endif %}>
+            <span><b>ذخیره‌ی پاسخ‌های نیمه‌کاره</b><small>پاسخ‌هایی که تا انتها نرسیده‌اند هم ذخیره و در قیف ریزش دیده می‌شوند.</small></span></label>
+          <label class="sw form-switch"><input class="form-check-input" type="checkbox" role="switch" name="verify_mobile" id="verify_mobile" {% if s.verify_mobile %}checked{% endif %}>
+            <span><b>تأیید موبایل با کد پیامکی</b><small>پیش از شروع، شماره‌ی پاسخ‌دهنده با کد یک‌بارمصرف تأیید می‌شود.</small></span></label>
+          <label class="sw form-switch" id="opm"><input class="form-check-input" type="checkbox" role="switch" name="one_per_mobile" {% if s.one_per_mobile %}checked{% endif %} {% if not s.verify_mobile %}disabled{% endif %}>
+            <span><b>هر موبایل فقط یک بار</b><small>نیازمند فعال بودن «تأیید موبایل» است.</small></span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="c mb-3">
+      <div class="c__h">{% ic "code" 18 %}<h2>فیلدهای مخفی</h2></div>
+      <div class="c__b">
+        <label class="lbl" for="hidden_fields">نام فیلدها (با کاما جدا کنید)</label>
+        <input class="form-control" id="hidden_fields" name="hidden_fields" dir="ltr" maxlength="300" value="{{ s.hidden_fields }}" placeholder="utm_source,ref,customer_id">
+        <div class="help">فقط حروف انگلیسی، عدد و _. مقدارشان از آدرس لینک خوانده و کنار هر پاسخ ذخیره می‌شود؛ مثل:</div>
+        <code class="d-block ltr mt-1 p-2 rounded small text-break" style="background:var(--bg);color:var(--t2)">{{ request.scheme }}://{{ request.get_host }}{{ s.get_absolute_url }}?{% if s.hidden_list %}{% for h in s.hidden_list %}{{ h }}=…{% if not forloop.last %}&amp;{% endif %}{% endfor %}{% else %}utm_source=instagram{% endif %}</code>
+      </div>
+    </section>
+
+    <section class="c mb-3">
+      <div class="c__h">{% ic "bell" 18 %}<h2>اعلان‌ها و اتصال</h2></div>
+      <div class="c__b setg">
+        <div>
+          <label class="sw form-switch {% if not plan.sms_notify %}gated{% endif %}"><input class="form-check-input" type="checkbox" role="switch" name="notify_sms" {% if s.notify_sms %}checked{% endif %} {% if not plan.sms_notify %}disabled{% endif %}>
+            <span><b>پیامک برای هر پاسخ جدید {% if not plan.sms_notify %}<span class="lock">{% ic "lock" 11 %} پلن بالاتر</span>{% endif %}</b><small>با هر پاسخ کامل، پیامکی به شماره‌ی زیر ارسال می‌شود.</small></span></label>
+          <label class="lbl mt-3" for="notify_mobile">موبایل دریافت اعلان</label>
+          <input class="form-control" id="notify_mobile" name="notify_mobile" inputmode="numeric" dir="ltr" maxlength="11" value="{{ s.notify_mobile }}" placeholder="09xxxxxxxxx">
+        </div>
+        <div>
+          <label class="lbl" for="notify_email">ایمیل دریافت اعلان</label>
+          <input class="form-control" id="notify_email" name="notify_email" type="email" dir="ltr" maxlength="254" value="{{ s.notify_email }}" placeholder="name@example.com">
+          <div class="help">خلاصه‌ی هر پاسخ جدید به این ایمیل فرستاده می‌شود. خالی = خاموش.</div>
+          <label class="lbl mt-3" for="webhook_url">وب‌هوک (Webhook) {% if not plan.webhook %}<span class="lock">{% ic "lock" 11 %} پلن بالاتر</span>{% endif %}</label>
+          <input class="form-control {% if not plan.webhook %}gated{% endif %}" id="webhook_url" name="webhook_url" type="url" dir="ltr" maxlength="500" value="{{ s.webhook_url }}" placeholder="https://example.com/hook" pattern="https://.*" {% if not plan.webhook %}disabled{% endif %}>
+          <div class="help">هر پاسخ کامل به‌صورت JSON با POST به این آدرس ارسال می‌شود. فقط آدرس <span class="ltr">https://</span>.</div>
+          <div class="err d-none" id="whErr">آدرس وب‌هوک باید با https:// شروع شود.</div>
+        </div>
+        {% if not plan.sms_notify or not plan.webhook %}<div class="small muted" style="grid-column:1/-1">پلن فعلی شما «{{ plan.name }}» است. <a class="text-decoration-underline" style="color:var(--p)" href="{% url 'billing:billing' %}">مقایسه‌ی پلن‌ها و ارتقا</a></div>{% endif %}
+      </div>
+    </section>
+
+    <div class="savebar"><span class="small muted d-none d-sm-inline">تغییرات بلافاصله پس از ذخیره روی فرم منتشرشده اعمال می‌شوند.</span>
+      <button class="b b--p ms-auto" type="submit">{% ic "check" 17 %} ذخیره‌ی تنظیمات</button></div>
+  </form>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var vm = document.getElementById('verify_mobile'), opm = document.querySelector('#opm input');
+  vm.addEventListener('change', function () { opm.disabled = !vm.checked; if (!vm.checked) opm.checked = false; });
+  var wh = document.getElementById('webhook_url'), err = document.getElementById('whErr');
+  wh.closest('form').addEventListener('submit', function (e) {
+    var v = wh.value.trim();
+    if (!wh.disabled && v && v.indexOf('https://') !== 0) { e.preventDefault(); err.classList.remove('d-none'); wh.classList.add('is-invalid'); wh.focus(); }
+  });
+  wh.addEventListener('input', function () { err.classList.add('d-none'); wh.classList.remove('is-invalid'); });
+})();
+</script>
+{% endblock %}

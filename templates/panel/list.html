@@ -1,0 +1,73 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}{{ r.title }}{% endblock %}
+{% block content %}
+<div class="ph">
+  <h1>{% pi r.icon 24 %} {{ r.title }} <small class="muted" style="font-size:13px;font-weight:500">{{ total|pfa }} مورد</small></h1>
+  <div class="ph__act">
+    <a class="b" href="?{{ qs_base }}{% if qs_base %}&{% endif %}export=csv">{% pi "download" 16 %} خروجی اکسل</a>
+    {% if can_add %}<a class="b b--p" href="{{ r.add_url }}">{% pi "plus" 16 %} افزودن {{ r.title_single }}</a>{% endif %}
+  </div>
+  {% if r.help %}<div class="sub">{{ r.help }}</div>{% endif %}
+</div>
+
+<div class="c">
+  <form method="get" class="tools-bar">
+    {% if r.search %}<div class="s">{% pi "search" 16 %}<input class="form-control" name="q" value="{{ q }}" placeholder="جستجو…"></div>{% endif %}
+    {% for name, label, opts in filters %}
+      <select class="form-select" name="f_{{ name }}" style="width:auto;max-width:210px" onchange="this.form.submit()" aria-label="{{ label }}">
+        <option value="">{{ label }}: همه</option>
+        {% for v, t in opts %}<option value="{{ v }}" {% if active_filters|get:name == v %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+    {% endfor %}
+    {% if r.search %}<button class="b" type="submit">جستجو</button>{% endif %}
+    {% if q or active_filters %}<a class="b b--g" href="{{ r.list_url }}">{% pi "x" 15 %} حذف فیلترها</a>{% endif %}
+    {% if sortable %}<span class="muted small ms-auto">{% pi "grip" 15 %} برای تغییر ترتیب، ردیف‌ها را بکشید.</span>{% endif %}
+  </form>
+
+  <form method="post" id="bulkform">{% csrf_token %}
+    <div class="bulk" id="bulk">
+      <b><span id="selN">۰</span> مورد انتخاب شده</b>
+      {% for f, lbl in bool_toggles %}{% if can_change %}
+        <button class="b b--sm" name="action" value="on:{{ f }}">{{ lbl }}: روشن</button>
+        <button class="b b--sm" name="action" value="off:{{ f }}">{{ lbl }}: خاموش</button>{% endif %}{% endfor %}
+      <button class="b b--sm" name="action" value="export">{% pi "download" 14 %} خروجی</button>
+      {% if can_delete %}<button class="b b--sm b--d" name="action" value="delete">{% pi "trash" 14 %} حذف</button>{% endif %}
+    </div>
+    {% if rows %}
+    <div class="tw"><table class="t" {% if sortable %}data-sortable="{% url 'panel:reorder' r.key %}"{% endif %}>
+      <thead><tr>
+        {% if sortable %}<th></th>{% endif %}
+        <th class="chk"><input type="checkbox" class="form-check-input" id="selAll" aria-label="انتخاب همه"></th>
+        {% if r.thumb %}<th></th>{% endif %}
+        {% for c in columns %}<th>{% if c.sortable %}<a href="?{{ qs_base }}{% if qs_base %}&{% endif %}o={% if order == c.name %}-{% endif %}{{ c.name }}">{{ c.label }}{% if order == c.name %} ▲{% elif order == "-"|add:c.name %} ▼{% endif %}</a>{% else %}{{ c.label }}{% endif %}</th>{% endfor %}
+        <th class="act"></th>
+      </tr></thead>
+      <tbody>
+      {% for row in rows %}<tr data-id="{{ row.obj.pk }}">
+        {% if sortable %}<td class="grip" draggable="true">{% pi "grip" 16 %}</td>{% endif %}
+        <td class="chk"><input type="checkbox" class="form-check-input rowchk" name="ids" value="{{ row.obj.pk }}" aria-label="انتخاب"></td>
+        {% if r.thumb %}<td style="width:46px">{{ row.thumb }}</td>{% endif %}
+        {% for v in row.cells %}<td {% if forloop.first %}class="title-cell"{% endif %}>{% if forloop.first %}<a href="{{ row.edit }}">{{ v }}</a>{% else %}{{ v }}{% endif %}</td>{% endfor %}
+        <td class="act">
+          <a class="b b--sm b--g" href="{{ row.edit }}" title="ویرایش">{% pi "edit" 15 %}</a>
+          {% if row.site %}<a class="b b--sm b--g" href="{{ row.site }}" target="_blank" title="مشاهده در سایت">{% pi "eye" 15 %}</a>{% endif %}
+        </td>
+      </tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="empty">{% pi r.icon 48 %}<div>{% if q or active_filters %}موردی با این فیلترها پیدا نشد.{% else %}هنوز {{ r.title_single }}ی ثبت نشده است.{% endif %}</div>
+      {% if can_add and not q %}<a class="b b--p mt-3" href="{{ r.add_url }}">{% pi "plus" 16 %} افزودن اولین {{ r.title_single }}</a>{% endif %}</div>
+    {% endif %}
+  </form>
+  {% if page.has_other_pages %}
+  <div class="pager">
+    <span>صفحه‌ی {{ page.number|pfa }} از {{ page.paginator.num_pages|pfa }}</span>
+    <div class="d-flex gap-2">
+      {% if page.has_previous %}<a class="b b--sm" href="?{{ qs_base }}{% if qs_base %}&{% endif %}{% if order %}o={{ order }}&{% endif %}page={{ page.previous_page_number }}">قبلی</a>{% endif %}
+      {% if page.has_next %}<a class="b b--sm" href="?{{ qs_base }}{% if qs_base %}&{% endif %}{% if order %}o={{ order }}&{% endif %}page={{ page.next_page_number }}">بعدی</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

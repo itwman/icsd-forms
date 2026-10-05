@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}{% load panel %}
+{% block title %}نقش‌ها{% endblock %}
+{% block content %}
+<div class="ph"><h1>{% pi "shield" 24 %} نقش‌ها و مجوزها</h1>
+  <div class="ph__act"><a class="b b--p" href="{% url 'panel:role_add' %}">{% pi "plus" 16 %} نقش جدید</a><a class="b" href="/panel/r/accounts-user/?f_is_staff=1">{% pi "users" 16 %} کارمندان</a></div>
+  <div class="sub">هر نقش مجموعه‌ای از مجوزهاست (دیدن، افزودن، ویرایش، حذف برای هر بخش). به کاربر نقش بدهید و «دسترسی به پنل» را روشن کنید. مدیر ارشد همیشه همه‌ی دسترسی‌ها را دارد.</div></div>
+<div class="c"><div class="tw"><table class="t"><thead><tr><th>نقش</th><th>تعداد کاربر</th><th>تعداد مجوز</th><th></th></tr></thead><tbody>
+{% for g in groups %}<tr><td class="title-cell"><a href="{% url 'panel:role_edit' g.pk %}">{{ g.name }}</a></td><td>{{ g.users|pfa }}</td><td>{{ g.perms|pfa }}</td><td class="act"><a class="b b--sm" href="{% url 'panel:role_edit' g.pk %}">{% pi "edit" 14 %} ویرایش</a></td></tr>
+{% empty %}<tr><td colspan="4" class="empty">نقشی تعریف نشده.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

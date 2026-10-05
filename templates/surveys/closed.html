@@ -1,0 +1,33 @@
+{% load static %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ s.title }} — پاسخ‌گیری فعال نیست</title>
+{% if site.favicon %}<link rel="icon" href="{{ site.favicon.url }}">{% else %}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endif %}
+<link rel="stylesheet" href="{% static 'css/runner.css' %}">
+<style>:root{--p:{{ theme.primary|default:'#1E9E7B' }};--bg:{{ theme.bg|default:'#F6F7F4' }};--card:{{ theme.card|default:'#FFFFFF' }};--t:{{ theme.text|default:'#16303A' }};}</style>
+</head>
+<body class="rn rn--closed fs-{{ theme.font_size|default:'md' }} rad-{{ theme.radius|default:'lg' }}{% if request.GET.embed == '1' %} is-embed{% endif %}">
+<div class="rn-bg" aria-hidden="true"></div>
+<main class="rn-app">
+  <section class="rn-screen rn-closed" aria-labelledby="closed-title">
+    {% if theme.logo %}<img class="rn-logo rn-closed__logo" src="{{ theme.logo }}" alt="">{% endif %}
+    <div class="rn-closed__icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="21" width="30" height="21" rx="5"/><path d="M15 21v-6a9 9 0 0 1 18 0v6"/><circle cx="24" cy="31" r="2.2" fill="currentColor"/><path d="M24 33v3"/>
+      </svg>
+    </div>
+    <p class="rn-kicker">{{ s.title }}</p>
+    <h1 id="closed-title" class="rn-closed__title">در حال حاضر پاسخ پذیرفته نمی‌شود</h1>
+    <p class="rn-closed__text">{{ reason }}</p>
+    <p class="rn-closed__hint">اگر فکر می‌کنید اشتباهی رخ داده، با برگزارکننده‌ی این فرم تماس بگیرید.</p>
+  </section>
+</main>
+{% if s.live.settings.show_branding is not False %}<footer class="rn-foot rn-foot--static"><a class="rn-brand" href="{% url 'core:home' %}" target="_blank" rel="noopener">ساخته‌شده با <b>فرم‌ساز ICSD</b></a></footer>{% endif %}
+<script>
+(function(){if(window.parent===window)return;function p(){try{window.parent.postMessage({icsdHeight:document.documentElement.offsetHeight},'*');}catch(e){}}window.addEventListener('load',p);p();})();
+</script>
+</body>
+</html>
